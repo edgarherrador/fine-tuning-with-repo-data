@@ -1,0 +1,243 @@
+{
+  "number": 11009,
+  "title": "PS-69448: Add targeted diagnostic logs for ad hoc report email pipeline",
+  "body": "[PS-69448](https://jira.trimble.tools/browse/PS-69448) Added targeted diagnostic logs for ad hoc report email pipeline.\r\nIntended to be deployed to Staging, where the customer database is copied, and possibly to Production (as scheduled email services are turned off on Staging and not all of these can be tested there).\r\n\r\n**Update:** The new log records the Notifier's final send outcome for ad-hoc-report notifications only, so next Tuesday we can see whether the request is being silently skipped (deleted, no email, no error). The enriched gate log is a smaller addition — it just lets us distinguish a silent generation failure from success at the existing log point.",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "sevilbk-trimble",
+  "created_at": "2026-06-10T17:42:48Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "7480d4475644df46235e89909b7397bb37d0a7a6",
+  "head_branch": "wip/Sevil/PS-69448-AdHoc-Reports",
+  "head_sha": "0cfbd50e9e1ab78b1e5ff2bfa4c8ca17caca3fcb",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 1,
+  "approvers": [
+    "kcostenbader"
+  ],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nAdds diagnostic logging to help trace failures in the scheduled ad hoc report email pipeline (PS-69448), spanning the scheduler initiation path, report generation path, and report job execution path.\n\n**Changes:**\n- Logs ReportRequest configuration in `SchedulerService` immediately before initiating the report request.\n- Logs key decision points in `ReportSystem.GenerateReportsAsync` around email send/queueing.\n- Logs when report generation is skipped in the report job handler due to missing `m_RequestedBy`.\n\n### Reviewed changes\n\nCopilot reviewed 3 out of 3 changed files in this pull request and generated 2 comments.\n\n| File | Description |\n| ---- | ----------- |\n| Core/Business Layer/DataAccess/Services/Scheduler/SchedulerService.cs | Adds an info log capturing key ReportRequest fields right before initiating scheduled ad hoc report requests. |\n| Core/Business Layer/DataAccess/ReportSystem.cs | Adds diagnostic logs during report generation and email notification queueing for troubleshooting scheduled ad hoc emails. |\n| Core/Business Layer/DataAccess/Report/JobHandler.cs | Adds a warning log when a report job cannot run because `m_RequestedBy` is null. |\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-10T17:47:44Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "sevilbk-trimble",
+      "submitted_at": "2026-06-10T18:02:21Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "sevilbk-trimble",
+      "submitted_at": "2026-06-10T18:02:27Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 3 out of 3 changed files in this pull request and generated 2 comments.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-10T18:10:03Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 3 out of 3 changed files in this pull request and generated 2 comments.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-10T18:17:50Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "sevilbk-trimble",
+      "submitted_at": "2026-06-10T18:27:37Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 3 out of 3 changed files in this pull request and generated 1 comment.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-10T18:32:39Z"
+    },
+    {
+      "state": "DISMISSED",
+      "body": "Approved contingent upon the logging being reduced to just scheduled reports",
+      "author": "kcostenbader",
+      "submitted_at": "2026-06-12T00:14:28Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "sevilbk-trimble",
+      "submitted_at": "2026-06-12T19:40:26Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "sevilbk-trimble",
+      "submitted_at": "2026-06-12T19:40:35Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 4 out of 4 changed files in this pull request and generated no new comments.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-12T20:42:26Z"
+    },
+    {
+      "state": "APPROVED",
+      "body": "",
+      "author": "kcostenbader",
+      "submitted_at": "2026-06-13T02:31:58Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2677,
+      "body": "The PS-69448 diagnostic log here runs for every report generation (including non-ad hoc and non-email requests), which can add significant noise/volume and make the targeted scheduler email investigation harder. Gate this log to just the scheduled ad hoc email path (e.g., `ReportID == ADHOC_REPORT_IDENTIFIER && forEMail`).",
+      "author": "Copilot",
+      "created_at": "2026-06-10T17:47:44Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2692,
+      "body": "`notificationRequest.RecordId` is logged before `SendReports()` persists the notification request via `NotificationSystem.CreateRequest(...)` (which is where `RecordId` is assigned). This means the logged `NotificationRequestID` will typically be 0 and can mislead diagnostics. Log after `SendReports()` (and only when not running under tests) so the ID is populated.",
+      "author": "Copilot",
+      "created_at": "2026-06-10T17:47:44Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2692,
+      "body": "Addressed",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-06-10T18:02:21Z",
+      "in_reply_to_id": 3390360854
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2677,
+      "body": "Addressed",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-06-10T18:02:27Z",
+      "in_reply_to_id": 3390360808
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2676,
+      "body": "This diagnostic log is currently emitted for *all* ad hoc report generation, including non-email actions (e.g., ad hoc preview/view requests). That can create unnecessary log volume and makes the PS-69448 investigation harder. Gate it to the scheduled email path by requiring `forEMail` as well.",
+      "author": "Copilot",
+      "created_at": "2026-06-10T18:10:02Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2695,
+      "body": "This PS-69448 log in the email path will run for every emailed report (not just ad hoc scheduled reports), which can add significant log noise. Since the PR is targeting diagnostics for the ad hoc report email pipeline, gate this log to `ADHOC_REPORT_IDENTIFIER` (and keep the existing test guard).",
+      "author": "Copilot",
+      "created_at": "2026-06-10T18:10:03Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2676,
+      "body": "This diagnostic log is still emitted for *all* ad hoc report generation, including ad hoc preview/view requests (e.g., `GetReportRequestForAdHocPreviewAsync` builds an ad hoc `ReportRequest` with `Action = View` in this same file). That can create significant log noise and undermines the goal of targeted diagnostics for the scheduled email pipeline. Gate this log to the email path (`forEMail`).",
+      "author": "Copilot",
+      "created_at": "2026-06-10T18:17:49Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2695,
+      "body": "Indentation on this `if` is off (it starts at column 1) which breaks readability and will likely violate the project's formatting rules/.editorconfig. Align it with the surrounding block indentation.",
+      "author": "Copilot",
+      "created_at": "2026-06-10T18:17:49Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2676,
+      "body": "IGNORE",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-06-10T18:27:37Z",
+      "in_reply_to_id": 3390545658
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/Report/JobHandler.cs",
+      "line": 71,
+      "body": "The warning message leaks an internal field name (`m_RequestedBy`), which is less clear for operational diagnostics than describing the missing context. Consider rewording to a user-focused message (and keep the job identity prefix as you already do on the other warning above).",
+      "author": "Copilot",
+      "created_at": "2026-06-10T18:32:38Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2676,
+      "body": "I agree with copilot",
+      "author": "kcostenbader",
+      "created_at": "2026-06-12T00:13:45Z",
+      "in_reply_to_id": 3390545658
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2676,
+      "body": "I agree with copilot",
+      "author": "kcostenbader",
+      "created_at": "2026-06-12T00:13:48Z",
+      "in_reply_to_id": 3390495164
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2676,
+      "body": "Addressed",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-06-12T19:40:26Z",
+      "in_reply_to_id": 3390545658
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "line": 2676,
+      "body": "Addressed",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-06-12T19:40:35Z",
+      "in_reply_to_id": 3390495164
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/Business Layer/DataAccess/NotificationSystem.cs",
+      "status": "modified",
+      "additions": 9,
+      "deletions": 0,
+      "patch": "@@ -2640,6 +2640,15 @@ public async Task GenerateAndSendMessagesAsync(NotificationRequest request, IReq\n             }\n             finally\n             {\n+                // PS-69448: Diagnostic logging — final send outcome for ad hoc report notifications only. AdHocColumns is\n+                // persisted and reloaded with the request (unlike ReportID/AdHocViewId, which are 0 at this point), so it is\n+                // the reliable ad-hoc discriminator here. This captures Skipped_NoValidRecipients, which deletes the row and\n+                // sends nothing with no \"Sent EMail\" line and no error — the exact fingerprint of the missing emails.\n+                if (!request.ForTests && request.AdHocColumns != null && request.AdHocColumns.Count > 0)\n+                {\n+                    Logger.LogInformation($\"PS-69448 Notifier: NotificationRequestID={request.RecordId}; Org={request.OrganizationID}; SendStatus={request.SendStatus}; RecipientCount={request.Recipients?.Count ?? 0}; NotificationType={request.NotificationType}; FailureReason='{request.SendFailureReason}'\");\n+                }\n+\n                 if (request.SendStatus == NotificationRequest.SendStatuses.FatalError)\n                 {\n                     // Log the reason to the event log if it hasn't been logged already"
+    },
+    {
+      "filename": "Core/Business Layer/DataAccess/Report/JobHandler.cs",
+      "status": "modified",
+      "additions": 4,
+      "deletions": 0,
+      "patch": "@@ -65,6 +65,10 @@ protected override async Task OnRunJobServiceJobAsync(ErrorEncountered error)\n                         await new ReportSystem().GenerateReportAndReturnResultAsync(portfolioDB, serverRequest, m_CancellationToken);\n                     }\n                 }\n+                else\n+                {\n+                    Logger.LogWarning($\"{this.JobIdentity}: RequestedBy context is null, report generation skipped\");\n+                }\n             }\n             finally\n             {"
+    },
+    {
+      "filename": "Core/Business Layer/DataAccess/ReportSystem.cs",
+      "status": "modified",
+      "additions": 16,
+      "deletions": 0,
+      "patch": "@@ -2673,6 +2673,15 @@ public async Task<ReportResult> GenerateReportsAsync(IDBHelper portfolioDB, Repo\n                     result = null;\n                 }\n \n+                if (request.ReportID == Report.ADHOC_REPORT_IDENTIFIER && forEMail)\n+                {\n+                    // PS-69448: Diagnostic logging to identify why scheduled ad hoc report emails are not being sent.\n+                    // resultIsNull + generatedFileExists distinguish a silent generation/render failure (which would\n+                    // otherwise look identical to success at this point) from a genuinely generated report.\n+                    var generatedFileExists = result != null && Global.VerifyFileExistence(result.ServerFileName);\n+                    Logger.LogInformation($\"PS-69448 GenerateReportsAsync: forEMail={forEMail}; resultIsNull={result == null}; generatedFileExists={generatedFileExists}; error.HasMessage={error.HasMessage}; error.Message='{error.Message}'; Org={portfolioDB.OrganizationID}; Project={portfolioDB.ProjectID}; AdHocViewId={request.AdHocViewId}; AdHocColumnCount={request.AdHocColumns?.Count ?? 0}; HasFilters={request.AdditionalProjectFilters != null}; RecordOption={request.RecordOption}\");\n+                }\n+\n                 if (!error.HasMessage)\n                 {\n                     if (forEMail)\n@@ -2686,6 +2695,13 @@ public async Task<ReportResult> GenerateReportsAsync(IDBHelper portfolioDB, Repo\n \n                         SendReports(portfolioDB, result, notificationRequest, notificationRequestsForTests != null);\n \n+                        if (notificationRequestsForTests == null && request.ReportID == Report.ADHOC_REPORT_IDENTIFIER)\n+                        {\n+                            // PS-69448: Diagnostic logging — confirms CreateRequest ran and gives the row id + recipient\n+                            // count so we can correlate with the Notifier outcome log (PS-69448 Notifier).\n+                            Logger.LogInformation($\"PS-69448 SendReports: Queued notification request. Org={portfolioDB.OrganizationID}; Project={portfolioDB.ProjectID}; NotificationRequestID={notificationRequest.RecordId}; AdHocViewId={notificationRequest.AdHocViewId}; RecipientCount={notificationRequest.Recipients?.Count ?? 0}\");\n+                        }\n+\n                         // Notify user of success (the methods above will throw exceptions if something happens)\n                         error.Message = portfolioDB.GetNomenclatureProvider().GetWebNonFieldLabelNomenclature(NomenclatureMaster.WebApplicationSubAreas.ReportingWizard, \"RequestSubmitted\", true);\n "
+    },
+    {
+      "filename": "Core/Business Layer/DataAccess/Services/Scheduler/SchedulerService.cs",
+      "status": "modified",
+      "additions": 3,
+      "deletions": 0,
+      "patch": "@@ -946,6 +946,9 @@ private async Task InitiateReportRequestAsync(IDBHelper portfolioDB, ExecuteSche\n             // Add the current user as a contact\n             reportRequest.Contacts = new ContactForPicklistCollection { new ContactForPicklist(portfolioDB.User) };\n \n+            // PS-69448: Diagnostic logging — confirm ReportRequest configuration before initiating\n+            Logger.LogInformation($\"PS-69448 SchedulerService: Initiating report request. Org={portfolioDB.OrganizationID}; Project={portfolioDB.ProjectID}; Action={reportRequest.Action}; AdHocViewId={reportRequest.AdHocViewId}; TableType={reportRequest.TableType}; RecordOption={reportRequest.RecordOption}; ContactCount={reportRequest.Contacts?.Count ?? 0}\");\n+\n             await ReportSystem.InitiateReportRequestAsync(portfolioDB, reportRequest, cancellationToken, true);\n         }\n "
+    }
+  ],
+  "diff": "diff --git a/Core/Business Layer/DataAccess/NotificationSystem.cs b/Core/Business Layer/DataAccess/NotificationSystem.cs\nindex 0db9e93180d..fbd9c5968d6 100644\n--- a/Core/Business Layer/DataAccess/NotificationSystem.cs\t\n+++ b/Core/Business Layer/DataAccess/NotificationSystem.cs\t\n@@ -2640,6 +2640,15 @@ public async Task GenerateAndSendMessagesAsync(NotificationRequest request, IReq\n             }\n             finally\n             {\n+                // PS-69448: Diagnostic logging — final send outcome for ad hoc report notifications only. AdHocColumns is\n+                // persisted and reloaded with the request (unlike ReportID/AdHocViewId, which are 0 at this point), so it is\n+                // the reliable ad-hoc discriminator here. This captures Skipped_NoValidRecipients, which deletes the row and\n+                // sends nothing with no \"Sent EMail\" line and no error — the exact fingerprint of the missing emails.\n+                if (!request.ForTests && request.AdHocColumns != null && request.AdHocColumns.Count > 0)\n+                {\n+                    Logger.LogInformation($\"PS-69448 Notifier: NotificationRequestID={request.RecordId}; Org={request.OrganizationID}; SendStatus={request.SendStatus}; RecipientCount={request.Recipients?.Count ?? 0}; NotificationType={request.NotificationType}; FailureReason='{request.SendFailureReason}'\");\n+                }\n+\n                 if (request.SendStatus == NotificationRequest.SendStatuses.FatalError)\n                 {\n                     // Log the reason to the event log if it hasn't been logged already\ndiff --git a/Core/Business Layer/DataAccess/Report/JobHandler.cs b/Core/Business Layer/DataAccess/Report/JobHandler.cs\nindex 1f62dcdf412..65c4064c22b 100644\n--- a/Core/Business Layer/DataAccess/Report/JobHandler.cs\t\n+++ b/Core/Business Layer/DataAccess/Report/JobHandler.cs\t\n@@ -65,6 +65,10 @@ protected override async Task OnRunJobServiceJobAsync(ErrorEncountered error)\n                         await new ReportSystem().GenerateReportAndReturnResultAsync(portfolioDB, serverRequest, m_CancellationToken);\n                     }\n                 }\n+                else\n+                {\n+                    Logger.LogWarning($\"{this.JobIdentity}: RequestedBy context is null, report generation skipped\");\n+                }\n             }\n             finally\n             {\ndiff --git a/Core/Business Layer/DataAccess/ReportSystem.cs b/Core/Business Layer/DataAccess/ReportSystem.cs\nindex 36c6210a7e9..777e95735b7 100644\n--- a/Core/Business Layer/DataAccess/ReportSystem.cs\t\n+++ b/Core/Business Layer/DataAccess/ReportSystem.cs\t\n@@ -2673,6 +2673,15 @@ public async Task<ReportResult> GenerateReportsAsync(IDBHelper portfolioDB, Repo\n                     result = null;\n                 }\n \n+                if (request.ReportID == Report.ADHOC_REPORT_IDENTIFIER && forEMail)\n+                {\n+                    // PS-69448: Diagnostic logging to identify why scheduled ad hoc report emails are not being sent.\n+                    // resultIsNull + generatedFileExists distinguish a silent generation/render failure (which would\n+                    // otherwise look identical to success at this point) from a genuinely generated report.\n+                    var generatedFileExists = result != null && Global.VerifyFileExistence(result.ServerFileName);\n+                    Logger.LogInformation($\"PS-69448 GenerateReportsAsync: forEMail={forEMail}; resultIsNull={result == null}; generatedFileExists={generatedFileExists}; error.HasMessage={error.HasMessage}; error.Message='{error.Message}'; Org={portfolioDB.OrganizationID}; Project={portfolioDB.ProjectID}; AdHocViewId={request.AdHocViewId}; AdHocColumnCount={request.AdHocColumns?.Count ?? 0}; HasFilters={request.AdditionalProjectFilters != null}; RecordOption={request.RecordOption}\");\n+                }\n+\n                 if (!error.HasMessage)\n                 {\n                     if (forEMail)\n@@ -2686,6 +2695,13 @@ public async Task<ReportResult> GenerateReportsAsync(IDBHelper portfolioDB, Repo\n \n                         SendReports(portfolioDB, result, notificationRequest, notificationRequestsForTests != null);\n \n+                        if (notificationRequestsForTests == null && request.ReportID == Report.ADHOC_REPORT_IDENTIFIER)\n+                        {\n+                            // PS-69448: Diagnostic logging — confirms CreateRequest ran and gives the row id + recipient\n+                            // count so we can correlate with the Notifier outcome log (PS-69448 Notifier).\n+                            Logger.LogInformation($\"PS-69448 SendReports: Queued notification request. Org={portfolioDB.OrganizationID}; Project={portfolioDB.ProjectID}; NotificationRequestID={notificationRequest.RecordId}; AdHocViewId={notificationRequest.AdHocViewId}; RecipientCount={notificationRequest.Recipients?.Count ?? 0}\");\n+                        }\n+\n                         // Notify user of success (the methods above will throw exceptions if something happens)\n                         error.Message = portfolioDB.GetNomenclatureProvider().GetWebNonFieldLabelNomenclature(NomenclatureMaster.WebApplicationSubAreas.ReportingWizard, \"RequestSubmitted\", true);\n \ndiff --git a/Core/Business Layer/DataAccess/Services/Scheduler/SchedulerService.cs b/Core/Business Layer/DataAccess/Services/Scheduler/SchedulerService.cs\nindex 199f1989fdd..cc7e731058a 100644\n--- a/Core/Business Layer/DataAccess/Services/Scheduler/SchedulerService.cs\t\n+++ b/Core/Business Layer/DataAccess/Services/Scheduler/SchedulerService.cs\t\n@@ -946,6 +946,9 @@ private async Task InitiateReportRequestAsync(IDBHelper portfolioDB, ExecuteSche\n             // Add the current user as a contact\n             reportRequest.Contacts = new ContactForPicklistCollection { new ContactForPicklist(portfolioDB.User) };\n \n+            // PS-69448: Diagnostic logging — confirm ReportRequest configuration before initiating\n+            Logger.LogInformation($\"PS-69448 SchedulerService: Initiating report request. Org={portfolioDB.OrganizationID}; Project={portfolioDB.ProjectID}; Action={reportRequest.Action}; AdHocViewId={reportRequest.AdHocViewId}; TableType={reportRequest.TableType}; RecordOption={reportRequest.RecordOption}; ContactCount={reportRequest.Contacts?.Count ?? 0}\");\n+\n             await ReportSystem.InitiateReportRequestAsync(portfolioDB, reportRequest, cancellationToken, true);\n         }\n \n"
+}

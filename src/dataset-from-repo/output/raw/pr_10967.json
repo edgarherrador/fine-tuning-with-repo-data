@@ -1,0 +1,150 @@
+{
+  "number": 10967,
+  "title": "PS-69738: Allow the permission grid fill the area in View Settings",
+  "body": "Small change",
+  "state": "open",
+  "draft": false,
+  "labels": [
+    "blocked"
+  ],
+  "author": "EmanuelJauregui",
+  "created_at": "2026-06-04T20:52:55Z",
+  "merged_at": null,
+  "base_branch": "feature/Improv",
+  "base_sha": "e6fb26f97c0e6c0a630d99a89dbf32ed7fd94300",
+  "head_branch": "wip/Emanuel/PS-69738",
+  "head_sha": "0578ab9a826264bfde7c136627582700ecd6b140",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 1,
+  "approvers": [
+    "kcostenbader"
+  ],
+  "changes_requested_count": 1,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nUpdates the legacy View Settings popup layout so the permissions igGrid can expand to fill the available dialog space, instead of staying at a fixed height.\n\n**Changes:**\n- Removed the “toggle height by 1px” resize workaround when refreshing the permissions grid data.\n- Configured the permissions igGrid to use `height: \"100%\"`.\n- Added flexbox layout rules so the permissions grid container can grow within the dialog.\n\n### Reviewed changes\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated 1 comment.\n\n| File | Description |\n| ---- | ----------- |\n| Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.js | Switches permissions grid height from a fixed value to `100%` and removes the prior resize workaround. |\n| Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css | Adds flexbox rules so the permissions area/grid can fill remaining dialog height. |\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-04T20:56:30Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "EmanuelJauregui",
+      "submitted_at": "2026-06-04T20:59:29Z"
+    },
+    {
+      "state": "CHANGES_REQUESTED",
+      "body": "",
+      "author": "kcostenbader",
+      "submitted_at": "2026-06-04T22:07:03Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "EmanuelJauregui",
+      "submitted_at": "2026-06-04T22:25:47Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 3 out of 3 changed files in this pull request and generated 1 comment.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-04T22:35:17Z"
+    },
+    {
+      "state": "APPROVED",
+      "body": "",
+      "author": "kcostenbader",
+      "submitted_at": "2026-06-04T23:09:02Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "EmanuelJauregui",
+      "submitted_at": "2026-06-04T23:45:03Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css",
+      "line": 147,
+      "body": "These new layout rules rely on ID selectors (#divGeneral / #divPermissions). IDs are tightly coupled to a single markup instance and make styling harder to reuse/maintain; prefer applying a semantic class (e.g., `.ViewSettingsGeneral`, `.ViewSettingsPermissions`) and targeting that class instead.",
+      "author": "Copilot",
+      "created_at": "2026-06-04T20:56:30Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css",
+      "line": 147,
+      "body": "Keeping the ID selectors as-is. Rationale:\r\n\r\nConsistency with the existing file. ViewSettings.css already targets all of its own elements by ID (#ugPermissions, #ugPermissions_container, #btnMaximizeWindow, etc.). Switching only these two rules to semantic classes would make the stylesheet internally inconsistent.\r\n\r\nNo reuse scenario. #divGeneral and #divPermissions are unique, single-instance <div>s inside a single legacy popup (ViewSettings.aspx). The maintainability/reuse benefit of classes doesn't apply here, and following the suggestion would require also editing the .aspx markup — more change for no practical gain.\r\n\r\nThis page is slated for migration to Angular. This ASPX/WebForms popup will eventually be rewritten as an Angular component, at which point the styling will be redone with component-scoped CSS and proper class conventions anyway. Investing in a class-based refactor of the legacy markup now would be throwaway work.",
+      "author": "EmanuelJauregui",
+      "created_at": "2026-06-04T20:59:28Z",
+      "in_reply_to_id": 3358856821
+    },
+    {
+      "path": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css",
+      "line": 147,
+      "body": "Unfortunately this is not a valid reason for not following the application standard. The divs are standalone and have no existing css class.",
+      "author": "kcostenbader",
+      "created_at": "2026-06-04T22:06:53Z",
+      "in_reply_to_id": 3358856821
+    },
+    {
+      "path": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css",
+      "line": 147,
+      "body": "it was removed id reference",
+      "author": "EmanuelJauregui",
+      "created_at": "2026-06-04T22:25:47Z",
+      "in_reply_to_id": 3358856821
+    },
+    {
+      "path": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.js",
+      "line": 1482,
+      "body": "The grid is now configured with `height: \"100%\"` to fill available vertical space, but it still uses a fixed pixel width (`\"1021\"`). When the dialog is resized/maximized (`ToggleMaximizeWindow`), the permissions grid will not expand horizontally to fill the available area, which conflicts with the intent of having it “fill the area”. Consider switching the grid `width` option to `\"100%\"` so it can grow/shrink with the dialog.",
+      "author": "Copilot",
+      "created_at": "2026-06-04T22:35:17Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.js",
+      "line": 1482,
+      "body": "change this implies changes in the configuration of the grid, and for now it is better keep it as it is (only affects maximixed screen)",
+      "author": "EmanuelJauregui",
+      "created_at": "2026-06-04T23:45:03Z",
+      "in_reply_to_id": 3359279337
+    }
+  ],
+  "issue_comments": [
+    {
+      "body": "we wont merge this ticket until improv branch be free",
+      "author": "EmanuelJauregui",
+      "created_at": "2026-06-05T16:04:06Z"
+    }
+  ],
+  "files": [
+    {
+      "filename": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.aspx",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 2,
+      "patch": "@@ -47,7 +47,7 @@\n                         </li>\n                     </ul>\n                 </div>\n-                <div id=\"divGeneral\" style=\"width: 100%\">\n+                <div id=\"divGeneral\" class=\"ViewSettingsGeneral\">\n                     <div class=\"LabelRow First\">\n                         <div class=\"Cell First Last\">\n                             <asp:Label ID=\"lblViewName\" runat=\"server\" CssClass=\"Label Northstar\" data-nomenclature=\"ViewName\" />\n@@ -66,7 +66,7 @@\n                         </div>\n                     </div>\n \n-                    <div id=\"divPermissions\" runat=\"server\">\n+                    <div id=\"divPermissions\" class=\"ViewSettingsPermissions\" runat=\"server\">\n                         <div class=\"LabelRow SixColumn First\">\n                             <div class=\"Cell Span4 First\">\n                                 <asp:Label ID=\"lblPermissions\" runat=\"server\" CssClass=\"Label Northstar\" data-nomenclature=\"Permissions\" />"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css",
+      "status": "modified",
+      "additions": 15,
+      "deletions": 0,
+      "patch": "@@ -139,6 +139,21 @@ span.ui-iggrid-headertext {\n     display: none;\n }\n \n+/* Let the permissions grid fill the remaining dialog space */\n+.ViewSettingsGeneral,\n+.ViewSettingsPermissions {\n+    display: flex;\n+    flex-direction: column;\n+    flex: 1 1 auto;\n+    min-height: 0;\n+    width: 100%;\n+}\n+\n+.ViewSettingsPermissions .igGridDivFixed {\n+    flex: 1 1 auto;\n+    min-height: 189px;\n+}\n+\n .schedule-container {\n     width: 100%;\n     height: 100%;"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.js",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 10,
+      "patch": "@@ -1437,15 +1437,6 @@ var ViewSettingPermissionsModule = (function () {\n         enableOrDisableDeleteButton(false);\n         // Ensure the select all checkbox is cleared\n         updateSelectAll(true);\n-\n-        // When the controls are shown and rehidden, the grid will sometimes get set to the wrong size because it is hidden when it is trying to calc the size,\n-        // so play some gams with the height to get it to adjust correctly.\n-        const currentHeight = m_Grid.igGrid(\"option\", \"height\");\n-        m_Grid.igGrid(\"option\", \"height\", currentHeight - 1);\n-        // give a little time to grid resize function finish\n-        setTimeout(function () {\n-            m_Grid.igGrid(\"option\", \"height\", currentHeight);\n-        }, 100);\n     }\n \n     /**\n@@ -1486,7 +1477,7 @@ var ViewSettingPermissionsModule = (function () {\n                     autoCommit: true,\n                     autoGenerateColumns: false,\n                     showHeader: true,\n-                    height: \"189\",\n+                    height: \"100%\",\n                     width: \"1021\",\n                     primaryKey: \"collectionKey\",\n                     headerRendered: handleGridHeaderRendered,"
+    }
+  ],
+  "diff": "diff --git a/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.aspx b/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.aspx\nindex 312ab64cf4e..e4ff9a4ff18 100644\n--- a/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.aspx\t\n+++ b/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.aspx\t\n@@ -47,7 +47,7 @@\n                         </li>\n                     </ul>\n                 </div>\n-                <div id=\"divGeneral\" style=\"width: 100%\">\n+                <div id=\"divGeneral\" class=\"ViewSettingsGeneral\">\n                     <div class=\"LabelRow First\">\n                         <div class=\"Cell First Last\">\n                             <asp:Label ID=\"lblViewName\" runat=\"server\" CssClass=\"Label Northstar\" data-nomenclature=\"ViewName\" />\n@@ -66,7 +66,7 @@\n                         </div>\n                     </div>\n \n-                    <div id=\"divPermissions\" runat=\"server\">\n+                    <div id=\"divPermissions\" class=\"ViewSettingsPermissions\" runat=\"server\">\n                         <div class=\"LabelRow SixColumn First\">\n                             <div class=\"Cell Span4 First\">\n                                 <asp:Label ID=\"lblPermissions\" runat=\"server\" CssClass=\"Label Northstar\" data-nomenclature=\"Permissions\" />\ndiff --git a/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css b/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css\nindex ace642c5c70..081fd3bc884 100644\n--- a/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css\t\n+++ b/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.css\t\n@@ -139,6 +139,21 @@ span.ui-iggrid-headertext {\n     display: none;\n }\n \n+/* Let the permissions grid fill the remaining dialog space */\n+.ViewSettingsGeneral,\n+.ViewSettingsPermissions {\n+    display: flex;\n+    flex-direction: column;\n+    flex: 1 1 auto;\n+    min-height: 0;\n+    width: 100%;\n+}\n+\n+.ViewSettingsPermissions .igGridDivFixed {\n+    flex: 1 1 auto;\n+    min-height: 189px;\n+}\n+\n .schedule-container {\n     width: 100%;\n     height: 100%;\ndiff --git a/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.js b/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.js\nindex 7114f473591..eecc5a63dff 100644\n--- a/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.js\t\n+++ b/Core/Web Layer/WebUI/Popups/ViewSettings/ViewSettings.js\t\n@@ -1437,15 +1437,6 @@ var ViewSettingPermissionsModule = (function () {\n         enableOrDisableDeleteButton(false);\n         // Ensure the select all checkbox is cleared\n         updateSelectAll(true);\n-\n-        // When the controls are shown and rehidden, the grid will sometimes get set to the wrong size because it is hidden when it is trying to calc the size,\n-        // so play some gams with the height to get it to adjust correctly.\n-        const currentHeight = m_Grid.igGrid(\"option\", \"height\");\n-        m_Grid.igGrid(\"option\", \"height\", currentHeight - 1);\n-        // give a little time to grid resize function finish\n-        setTimeout(function () {\n-            m_Grid.igGrid(\"option\", \"height\", currentHeight);\n-        }, 100);\n     }\n \n     /**\n@@ -1486,7 +1477,7 @@ var ViewSettingPermissionsModule = (function () {\n                     autoCommit: true,\n                     autoGenerateColumns: false,\n                     showHeader: true,\n-                    height: \"189\",\n+                    height: \"100%\",\n                     width: \"1021\",\n                     primaryKey: \"collectionKey\",\n                     headerRendered: handleGridHeaderRendered,\n"
+}

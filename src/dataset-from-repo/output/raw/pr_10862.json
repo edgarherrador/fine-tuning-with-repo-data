@@ -1,0 +1,50 @@
+{
+  "number": 10862,
+  "title": "docs: add error message assertion rules to integration test conventions",
+  "body": "",
+  "state": "open",
+  "draft": true,
+  "labels": [],
+  "author": "sevilbk-trimble",
+  "created_at": "2026-05-22T19:38:55Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "5a15a713a9932f8b8bedcc1bb14d74eb13443f7e",
+  "head_branch": "wip/Sevil/Improvements",
+  "head_sha": "c87a713c1ceb94f7734129ba617d88978f9cfa62",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nAdds integration test documentation guidance to ensure error assertions validate the specific expected nomenclature error message (to avoid false positives from unrelated failures).\n\n**Changes:**\n- Documented new conventions for asserting `error.Message` against the exact nomenclature string (with examples).\n- Adjusted the pre-completion checklist formatting at the end of the doc.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-05-22T19:42:01Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "docs/ai/INTEGRATION_TEST_CONVENTIONS.md",
+      "line": 52,
+      "body": "The example enum access `NomenclatureMaster.AllApplicationErrors.{TheRelevantErrorKey}` is not valid C# syntax (the `{}` placeholder will not compile if copied). Use a real enum member in the snippet and annotate it as an example to replace.\n",
+      "author": "Copilot",
+      "created_at": "2026-05-22T19:42:01Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "docs/ai/INTEGRATION_TEST_CONVENTIONS.md",
+      "status": "modified",
+      "additions": 38,
+      "deletions": 0,
+      "patch": "@@ -26,6 +26,44 @@ Do not edit `_Foundation` files through the `IntegrationTests` project path. Edi\n - Group related assertions with `AssertionScope`.\n - Keep dependent assertions (for example: object not null, child collection not null, child count) outside `AssertionScope`; use `AssertionScope` only after prerequisites are validated.\n \n+### Error Message Assertions\n+\n+- Never assert only `error.HasError.Should().BeTrue()` or `error.Message.Should().NotBeNullOrEmpty()`.\n+  These pass on any error (timeouts, null references, unrelated exceptions), masking bugs.\n+- Always assert `error.Message` against the **exact nomenclature string** returned by the system under test.\n+\n+**How to get the expected string:**\n+\n+1. If the test class already defines a constant for the expected message (e.g., `SECURITY_ERROR_MESSAGE`), use it directly:\n+\n+```csharp\n+error.Message.Should().Be(SECURITY_ERROR_MESSAGE, \"security error message\");\n+```\n+\n+2. Otherwise, fetch the expected string from the nomenclature provider in a helper method. Use the `NomenclatureMaster.AllApplicationErrors` member that matches the error the system under test returns:\n+\n+```csharp\n+private string GetExpectedErrorMessage()\n+{\n+    using (var portfolioDB = _dbHelperFactory.NewDBHelperPortfolio(\n+        GenerateRequestedByProject(), m_oProject.ProjectID))\n+    {\n+        return portfolioDB.GetNomenclatureProvider().GetApplicationError(\n+            NomenclatureMaster.AllApplicationErrors.{TheRelevantErrorKey});\n+    }\n+}\n+```\n+\n+Then assert:\n+\n+```csharp\n+var expectedErrorMsg = GetExpectedErrorMessage();\n+error.Message.Should().Be(expectedErrorMsg, \"must match nomenclature error string\");\n+```\n+\n+**Common Mistake:** Asserting `error.Message.Should().NotBeNullOrEmpty()` — this will pass\n+if the system throws a database timeout or any other unrelated error, hiding a real regression.\n+\n ## 4. Base Class and Lifecycle Rules\n \n - Inherit `TestBase` for most tests."
+    }
+  ],
+  "diff": "diff --git a/docs/ai/INTEGRATION_TEST_CONVENTIONS.md b/docs/ai/INTEGRATION_TEST_CONVENTIONS.md\nindex c88004e1206..d14b5e9a757 100644\n--- a/docs/ai/INTEGRATION_TEST_CONVENTIONS.md\n+++ b/docs/ai/INTEGRATION_TEST_CONVENTIONS.md\n@@ -26,6 +26,44 @@ Do not edit `_Foundation` files through the `IntegrationTests` project path. Edi\n - Group related assertions with `AssertionScope`.\n - Keep dependent assertions (for example: object not null, child collection not null, child count) outside `AssertionScope`; use `AssertionScope` only after prerequisites are validated.\n \n+### Error Message Assertions\n+\n+- Never assert only `error.HasError.Should().BeTrue()` or `error.Message.Should().NotBeNullOrEmpty()`.\n+  These pass on any error (timeouts, null references, unrelated exceptions), masking bugs.\n+- Always assert `error.Message` against the **exact nomenclature string** returned by the system under test.\n+\n+**How to get the expected string:**\n+\n+1. If the test class already defines a constant for the expected message (e.g., `SECURITY_ERROR_MESSAGE`), use it directly:\n+\n+```csharp\n+error.Message.Should().Be(SECURITY_ERROR_MESSAGE, \"security error message\");\n+```\n+\n+2. Otherwise, fetch the expected string from the nomenclature provider in a helper method. Use the `NomenclatureMaster.AllApplicationErrors` member that matches the error the system under test returns:\n+\n+```csharp\n+private string GetExpectedErrorMessage()\n+{\n+    using (var portfolioDB = _dbHelperFactory.NewDBHelperPortfolio(\n+        GenerateRequestedByProject(), m_oProject.ProjectID))\n+    {\n+        return portfolioDB.GetNomenclatureProvider().GetApplicationError(\n+            NomenclatureMaster.AllApplicationErrors.{TheRelevantErrorKey});\n+    }\n+}\n+```\n+\n+Then assert:\n+\n+```csharp\n+var expectedErrorMsg = GetExpectedErrorMessage();\n+error.Message.Should().Be(expectedErrorMsg, \"must match nomenclature error string\");\n+```\n+\n+**Common Mistake:** Asserting `error.Message.Should().NotBeNullOrEmpty()` — this will pass\n+if the system throws a database timeout or any other unrelated error, hiding a real regression.\n+\n ## 4. Base Class and Lifecycle Rules\n \n - Inherit `TestBase` for most tests.\n"
+}

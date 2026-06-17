@@ -1,0 +1,50 @@
+{
+  "number": 11060,
+  "title": "PS-69899 Checking WorkflowStatePermission limited to normal workflow only. Workflow Templates do not require the check.",
+  "body": "PS-69899 Checking WorkflowStatePermission limited to normal workflow only. Workflow Templates do not require the check.",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "AbdulRahim1412",
+  "created_at": "2026-06-16T09:12:57Z",
+  "merged_at": null,
+  "base_branch": "feature/Improv",
+  "base_sha": "314f3ba55cfa5d3bce707850febe475de1e866c2",
+  "head_branch": "wip/abdul/PS-69899",
+  "head_sha": "d60218d0e5e880acb5d88aca289719489627aa64",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nThis PR (PS-69899) limits workflow-state permission enforcement to “normal” workflow-based records so that records operating under workflow templates are not blocked by `WorkflowStatePermission` checks.\n\n**Changes:**\n- Updates the workflow-state permission check to only run when the record is not in a workflow template context.\n- Clarifies the inline comment to reflect the “normal workflow only” intent.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-16T09:17:58Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Common/Components/Records/PrologRecordItemBase.cs",
+      "line": 1260,
+      "body": "Use the existing InTemplateWorkflow() helper instead of duplicating its implementation with `WorkflowTemplateId == 0`. This keeps the “template workflow” definition centralized and avoids drift if the condition ever changes.",
+      "author": "Copilot",
+      "created_at": "2026-06-16T09:17:58Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/Common/Components/Records/PrologRecordItemBase.cs",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 2,
+      "patch": "@@ -1255,9 +1255,9 @@ protected virtual Task OnCalculateValuesPreSaveAsync(CalculateValuesRequest requ\n \n             if (this is PrologRecordBase recordBase && PrologTable.HasWorkflowStateField(this.TableType))\n             {\n-                // If we are updating the workflow state verify that the user has comment or edit permission of the workflow state they assigned (or they are Mobile)\n+                // If we are updating the workflow state for normal workflow based records, verify that the user has comment or edit permission of the workflow state they assigned (or they are Mobile)\n \n-                if (originalRecord is PrologRecordBase originalRecordBase && originalRecordBase.WorkflowState != recordBase.WorkflowState)\n+                if (originalRecord is PrologRecordBase originalRecordBase && originalRecordBase.WorkflowState != recordBase.WorkflowState && !recordBase.InTemplateWorkflow())\n                 {\n                     var workflowSystem = request.BusinessLayerInterfaceInstantiator.NewWorkflowStateSystem();\n "
+    }
+  ],
+  "diff": "diff --git a/Core/Common/Components/Records/PrologRecordItemBase.cs b/Core/Common/Components/Records/PrologRecordItemBase.cs\nindex 381ece04a5..8e79617db2 100644\n--- a/Core/Common/Components/Records/PrologRecordItemBase.cs\n+++ b/Core/Common/Components/Records/PrologRecordItemBase.cs\n@@ -1255,9 +1255,9 @@ protected virtual Task OnCalculateValuesPreSaveAsync(CalculateValuesRequest requ\n \n             if (this is PrologRecordBase recordBase && PrologTable.HasWorkflowStateField(this.TableType))\n             {\n-                // If we are updating the workflow state verify that the user has comment or edit permission of the workflow state they assigned (or they are Mobile)\n+                // If we are updating the workflow state for normal workflow based records, verify that the user has comment or edit permission of the workflow state they assigned (or they are Mobile)\n \n-                if (originalRecord is PrologRecordBase originalRecordBase && originalRecordBase.WorkflowState != recordBase.WorkflowState)\n+                if (originalRecord is PrologRecordBase originalRecordBase && originalRecordBase.WorkflowState != recordBase.WorkflowState && !recordBase.InTemplateWorkflow())\n                 {\n                     var workflowSystem = request.BusinessLayerInterfaceInstantiator.NewWorkflowStateSystem();\n \n"
+}

@@ -1,0 +1,41 @@
+{
+  "number": 10402,
+  "title": "frontend",
+  "body": "",
+  "state": "open",
+  "draft": true,
+  "labels": [],
+  "author": "sevilbk-trimble",
+  "created_at": "2026-03-30T19:41:38Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "213797852a5bae61d57aba8955ce31c573c4805d",
+  "head_branch": "wip/Sevil/PS-67406-Database",
+  "head_sha": "3b2c7c1a2e2f45ce5f08c18eacff9654fcc74609",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nThis PR updates the LookupList frontend module exports so the Discipline lookup list can route igGrid checkbox changes through the shared `LookupListModule.CheckboxChanged` handler (consistent with the existing UOM module pattern).\n\n**Changes:**\n- Added `LookupListModule_Discipline.IgGrid_CheckboxChanged` export as a proxy to `m_Module.CheckboxChanged`.\n- Standardized checkbox-change handling for Discipline to match other lookup list modules that support checkbox columns.\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-03-30T19:49:10Z"
+    }
+  ],
+  "review_comments": [],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/Web Layer/WebUI/WebAdmin/LookupList/LookupList.js",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 0,
+      "patch": "@@ -97,6 +97,11 @@ var LookupListModule_Discipline = (function () {\n         m_Module.DoInitialization(config);\n     };\n \n+    // Proxy the checkbox click to the generic module handler\n+    m_Exports.IgGrid_CheckboxChanged = function (param, fieldName, primaryKey) {\n+        m_Module.CheckboxChanged(param, primaryKey, fieldName);\n+    };\n+\n     m_Exports.getModule = function () {\n         return m_Module;\n     };"
+    }
+  ],
+  "diff": "diff --git a/Core/Web Layer/WebUI/WebAdmin/LookupList/LookupList.js b/Core/Web Layer/WebUI/WebAdmin/LookupList/LookupList.js\nindex 5c61c1ced94..2a810c8ffdc 100644\n--- a/Core/Web Layer/WebUI/WebAdmin/LookupList/LookupList.js\t\n+++ b/Core/Web Layer/WebUI/WebAdmin/LookupList/LookupList.js\t\n@@ -97,6 +97,11 @@ var LookupListModule_Discipline = (function () {\n         m_Module.DoInitialization(config);\n     };\n \n+    // Proxy the checkbox click to the generic module handler\n+    m_Exports.IgGrid_CheckboxChanged = function (param, fieldName, primaryKey) {\n+        m_Module.CheckboxChanged(param, primaryKey, fieldName);\n+    };\n+\n     m_Exports.getModule = function () {\n         return m_Module;\n     };\n"
+}

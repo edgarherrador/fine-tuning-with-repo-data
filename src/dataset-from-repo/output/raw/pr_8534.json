@@ -1,0 +1,308 @@
+{
+  "number": 8534,
+  "title": "PS-60327 - Add Region (called Data_Center) to GainSight global context",
+  "body": "# EU/UK/ANZ - PS-60327\r\n\r\nUnfortunately I had to screw with GainSight again.\r\nAdded Data_Center to global context\r\n(Accounts and Users can be shared between Data Centers for User / Account properties are not good)",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "rroesler",
+  "created_at": "2025-07-18T23:20:05Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "5a15a713a9932f8b8bedcc1bb14d74eb13443f7e",
+  "head_branch": "wip/PS-60327-Add-Region-To-GainSight",
+  "head_sha": "75c895ae74025cc55201c64654df7768bfbe0420",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull Request Overview\n\nThis PR implements support for adding Region (called Data_Center) to GainSight global context to differentiate between data centers as accounts and users can be shared across regions. The changes include database updates to populate region information and code modifications to pass region data through the GainSight integration.\n\nKey changes:\n- Added region parameter handling throughout the GainSight integration chain\n- Created database migration script to populate region data for existing GainSight configurations\n- Updated method signatures to include region information in global context generation\n\n### Reviewed Changes\n\nCopilot reviewed 10 out of 10 changed files in this pull request and generated 3 comments.\n\n<details>\n<summary>Show a summary per file</summary>\n\n| File | Description |\r\n| ---- | ----------- |\r\n| Core/SQL/update_db_ignition_GainSight.sql | New database migration script that adds region information to GainSight external service configurations |\r\n| Core/Common/Components/Gainsight/GainsightSettings.cs | Added Region property and parsing logic for tracking parameters |\r\n| Core/Common/Components/Gainsight/GainsightGlobalContext.cs | Added DataCenter property and updated constructor to accept region parameter |\r\n| Core/Business Layer/DataAccess/GainsightSystem.cs | Updated method signatures to pass region through the context generation chain |\r\n| Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs | Updated mobile sync to pass hardcoded \"mobile\" region |\r\n| Multiple Packer.manifest files | Added new files to build manifests and updated file references |\n</details>\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2025-07-18T23:20:46Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 9 out of 9 changed files in this pull request and generated 6 comments.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-05-26T00:04:53Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-26T00:04:59Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-26T00:27:06Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-26T00:28:42Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-26T00:30:11Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-26T00:30:34Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-26T00:31:09Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-26T00:32:52Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 9 out of 9 changed files in this pull request and generated 1 comment.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-05-26T00:34:03Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-26T00:34:24Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/SQL/update_db_ignition_GainSight.sql",
+      "line": 82,
+      "body": "The variable @environment is referenced but not declared in this scope. The function fn_util_get_env() returns the environment value, but it's not being called or assigned to @environment variable.\n```suggestion\n\nDECLARE @environment NVARCHAR(100);\nSET @environment = dbo.fn_util_get_env();\n```",
+      "author": "Copilot",
+      "created_at": "2025-07-18T23:20:45Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs",
+      "line": 289,
+      "body": "The hardcoded \"mobile\" region string should be defined as a constant or retrieved from configuration to maintain consistency and avoid magic strings.\n```suggestion\n                var context = gainsight.GenerateGlobalContext(portfolioDB, RequestedBy, MobileRegion);\n```",
+      "author": "Copilot",
+      "created_at": "2025-07-18T23:20:46Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Common/Components/Gainsight/GainsightSettings.cs",
+      "line": 56,
+      "body": "The default value \"Unknown\" should be defined as a constant to ensure consistency across the codebase and make it easier to maintain.\n```suggestion\n            Region = parameters?.Region ?? DEFAULT_REGION;  \n```",
+      "author": "Copilot",
+      "created_at": "2025-07-18T23:20:46Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/SQL/update_db_ignition_GainSight.sql",
+      "line": 64,
+      "body": "`fn_util_get_env` declares `@environment` but returns `@Environment`. On case-sensitive collations this will raise \"Must declare the scalar variable\" and break the update script. Return the declared variable (`@environment`).\n",
+      "author": "Copilot",
+      "created_at": "2026-05-26T00:04:51Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/SQL/update_db_ignition_GainSight.sql",
+      "line": 61,
+      "body": "The environment mapping in `fn_util_get_env` appears to have diverged from `update_db_ignition_template.sql` (which includes `WHEN 'projectsight-labs' THEN 'labs'`). If this runs in the labs environment it will fall through to `other`, producing the wrong Region/Data_Center.\n",
+      "author": "Copilot",
+      "created_at": "2026-05-26T00:04:52Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Common/Components/Gainsight/GainsightSettings.cs",
+      "line": 56,
+      "body": "`JsonConvert.DeserializeObject` will throw if `service.ParametersJson` is an empty/whitespace string (common for newly created ExternalService rows). Consider normalizing with `string.IsNullOrWhiteSpace(service?.ParametersJson) ? \"{}\" : service.ParametersJson` before deserializing so Gainsight settings retrieval can’t fail due to blank JSON.\n",
+      "author": "Copilot",
+      "created_at": "2026-05-26T00:04:52Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Common/Components/Gainsight/GainsightSettings.cs",
+      "line": 17,
+      "body": "`Region` is a new public property but (a) it has no XML doc like the other public settings properties, and (b) it’s publicly settable even though it’s intended to be derived from ExternalService configuration. Consider adding a `<summary>` and making it `get; private set;` (or `get;`) to prevent accidental mutation after construction.\n",
+      "author": "Copilot",
+      "created_at": "2026-05-26T00:04:52Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/SyncSystem.cs",
+      "line": 84,
+      "body": "This call now populates the new `Data_Center` global-context field with the literal string \"mobile\". Given the PR’s goal is to disambiguate shared users/accounts across actual data centers (EU/UK/AU/NA), this looks like it will send incorrect region data for mobile telemetry. Prefer passing the configured Gainsight region (from ExternalService.ParametersJson / `GainsightSettings.Region`) instead of a placeholder.\n",
+      "author": "Copilot",
+      "created_at": "2026-05-26T00:04:52Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/SQL/delta_procs.sql",
+      "line": 22,
+      "body": "`delta_procs.sql` is a generated file and this hunk only changes machine-local `sqlpackage.exe` path/version metadata (no corresponding `base_procs.sql` changes in this PR). Per `docs/ai/BACKEND_CONVENTIONS.md:92`, generated `delta_procs.sql` should not be edited/committed unless it reflects actual proc diffs—please revert this header-only churn to avoid embedding developer-specific paths in the repo.",
+      "author": "Copilot",
+      "created_at": "2026-05-26T00:04:53Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/SQL/update_db_ignition_GainSight.sql",
+      "line": 82,
+      "body": "Fixed",
+      "author": "rroesler",
+      "created_at": "2026-05-26T00:04:59Z",
+      "in_reply_to_id": 2217030061
+    },
+    {
+      "path": "Core/SQL/update_db_ignition_GainSight.sql",
+      "line": 64,
+      "body": "Fixed and script updated from latest template ",
+      "author": "rroesler",
+      "created_at": "2026-05-26T00:27:05Z",
+      "in_reply_to_id": 3300394263
+    },
+    {
+      "path": "Core/Common/Components/Gainsight/GainsightSettings.cs",
+      "line": 56,
+      "body": "These are the same.  Unknown replace with GainsightSettings.UNKNOWN ",
+      "author": "rroesler",
+      "created_at": "2026-05-26T00:28:42Z",
+      "in_reply_to_id": 3300394289
+    },
+    {
+      "path": "Core/Common/Components/Gainsight/GainsightSettings.cs",
+      "line": 56,
+      "body": "Added to GainsightSettings ",
+      "author": "rroesler",
+      "created_at": "2026-05-26T00:30:11Z",
+      "in_reply_to_id": 2217030067
+    },
+    {
+      "path": "Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs",
+      "line": 289,
+      "body": "Added to GaightsightSettings",
+      "author": "rroesler",
+      "created_at": "2026-05-26T00:30:34Z",
+      "in_reply_to_id": 2217030063
+    },
+    {
+      "path": "Core/SQL/update_db_ignition_GainSight.sql",
+      "line": 61,
+      "body": "Fixed I believe, ",
+      "author": "rroesler",
+      "created_at": "2026-05-26T00:31:09Z",
+      "in_reply_to_id": 3300394274
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/SyncSystem.cs",
+      "line": 84,
+      "body": "Fixed .. but also Copilot is incorrect.   The region is passed from configuration BUT the mobile does not actualually care what the region string is.  Only WebUI did.    So we pass a fake string just for the API contract ",
+      "author": "rroesler",
+      "created_at": "2026-05-26T00:32:52Z",
+      "in_reply_to_id": 3300394306
+    },
+    {
+      "path": "Core/SQL/delta_procs.sql",
+      "line": 23,
+      "body": "`delta_procs.sql` is a generated artifact; this change updates machine-specific `sqlpackage.exe` path/version info (e.g., `C:\\Users\\...`) without any corresponding `base_procs.sql` change. Per `docs/ai/BACKEND_CONVENTIONS.md` (§3: SQL & Data Access), this file should only be regenerated/committed when the proc delta actually changes—otherwise it creates noisy diffs and bakes local-environment details into source control. Please revert this delta_procs change (or regenerate it as part of an intentional proc update).",
+      "author": "Copilot",
+      "created_at": "2026-05-26T00:34:03Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/SQL/delta_procs.sql",
+      "line": 22,
+      "body": "Interesting.  For me this delta-procs will have to get recompiled again on yet another merge where is might make a difference.   But I will keep this in mind for the future. ",
+      "author": "rroesler",
+      "created_at": "2026-05-26T00:34:24Z",
+      "in_reply_to_id": 3300394320
+    }
+  ],
+  "issue_comments": [
+    {
+      "body": "Compare compare to https://github.com/trimble-oss/projectsight-mobile/pull/12513\r\n\r\nDraft because I'm too tired to try it out locally right now.\r\n",
+      "author": "rroesler",
+      "created_at": "2025-07-18T23:21:49Z"
+    }
+  ],
+  "files": [
+    {
+      "filename": "Core/Business Layer/DataAccess/GainsightSystem.cs",
+      "status": "modified",
+      "additions": 6,
+      "deletions": 5,
+      "patch": "@@ -23,14 +23,15 @@ public class GainsightSystem : SystemBase\n         public GainsightSettings GetGainsightSettings(IRequestedBy requestedBy)\n         {\n             GainsightSettings settings = null;\n+\n             try\n             {\n                 settings = new GainsightSettings(Configuration.GetExternalService(ExternalService.Types.GainsightKey));\n                 if (!string.IsNullOrEmpty(settings.Key) || requestedBy?.User == null)\n                 {\n                     settings.UserInfo = GenerateUserInfo(requestedBy);\n                     settings.AccountInfo = new GainsightAccountInfo(requestedBy);\n-                    settings.GlobalContext = GenerateGlobalContext(requestedBy);\n+                    settings.GlobalContext = GenerateGlobalContext(requestedBy, settings.Region);\n                 }\n             }\n             catch (Exception ex)\n@@ -85,13 +86,13 @@ public GainsightUserInfo GenerateUserInfo(IRequestedBy requestedBy)\n         /// </summary>\n         /// <returns></returns>\n         [NotNull]\n-        private GainsightGlobalContext GenerateGlobalContext(IRequestedBy requestedBy)\n+        private GainsightGlobalContext GenerateGlobalContext(IRequestedBy requestedBy, string region)\n         {\n             // Exceptions are handled by the caller\n \n             using (var portfolioDB = requestedBy.ProjectID != 0 ? _dbHelperFactory.NewDBHelperPortfolio(requestedBy, requestedBy.ProjectID) : null)\n             {\n-                return GenerateGlobalContext(portfolioDB, requestedBy);\n+                return GenerateGlobalContext(portfolioDB, requestedBy, region);\n             }\n         }\n \n@@ -100,7 +101,7 @@ private GainsightGlobalContext GenerateGlobalContext(IRequestedBy requestedBy)\n         /// </summary>\n         /// <returns></returns>\n         [NotNull]\n-        public GainsightGlobalContext GenerateGlobalContext(IDBHelper portfolioDB, IRequestedBy requestedBy)\n+        public GainsightGlobalContext GenerateGlobalContext(IDBHelper portfolioDB, IRequestedBy requestedBy, string region)\n         {\n             // Exceptions are handled by the caller\n \n@@ -121,7 +122,7 @@ public GainsightGlobalContext GenerateGlobalContext(IDBHelper portfolioDB, IRequ\n                 }\n             }\n \n-            return new GainsightGlobalContext(requestedBy, project);\n+            return new GainsightGlobalContext(requestedBy, project, region);\n         }\n     }\n }"
+    },
+    {
+      "filename": "Core/Business Layer/DataAccess/SyncSystem.cs",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 1,
+      "patch": "@@ -6,6 +6,7 @@\n \n using ProjectSight.Common.Components;\n using ProjectSight.Common.Components.ApplicationEvents;\n+using ProjectSight.Common.Components.Gainsight;\n using ProjectSight.Common.Components.Mobile;\n \n namespace ProjectSight.DataAccess\n@@ -80,7 +81,7 @@ public MobileSyncPrep PrepareForSync(IRequestedBy requestedBy, int groupID, stri\n                 var groups = new UserGroupSystem().GetUserGroupsForMobile(portfolioDB, new ErrorEncountered());\n                 result.UserGroups = groups.Select(g => new MobileUserGroup(g));\n \n-                var context = gainsight.GenerateGlobalContext(portfolioDB, requestedBy);\n+                var context = gainsight.GenerateGlobalContext(portfolioDB, requestedBy, GainsightSettings.FOR_SYNC);\n \n                 if (requestedBy.ProjectID > 0)\n                 {"
+    },
+    {
+      "filename": "Core/Common/Components/Gainsight/GainsightGlobalContext.cs",
+      "status": "modified",
+      "additions": 7,
+      "deletions": 1,
+      "patch": "@@ -9,6 +9,9 @@ namespace ProjectSight.Common.Components.Gainsight\n     /// </summary>\n     public class GainsightGlobalContext\n     {\n+        [JsonProperty(\"Data_Center\")]\n+        public string DataCenter { get; set; }\n+\n         // user properties\n         [JsonProperty(\"Is_Portfolio_Admin\")]\n         public bool IsPortfolioAdmin { get; set; }\n@@ -112,7 +115,7 @@ protected GainsightGlobalContext()\n             // serialization\n         }\n \n-        public GainsightGlobalContext(IRequestedBy requestedBy, GainsightProjectDetails projectExtract)\n+        public GainsightGlobalContext(IRequestedBy requestedBy, GainsightProjectDetails projectExtract, string region)\n         {\n             var user = requestedBy.User;\n \n@@ -139,6 +142,9 @@ public GainsightGlobalContext(IRequestedBy requestedBy, GainsightProjectDetails\n                 isUserProjectAdmin = !user.FeatureIsDenied(FeaturePermission.IDs.Admin_ProjectSettings);\n             }\n \n+            // Data Center Regions \n+            DataCenter = region;\n+\n             // user properties\n             IsPortfolioAdmin = isUserPortfolioAdmin;\n             IsProjectAdmin = isUserProjectAdmin;"
+    },
+    {
+      "filename": "Core/Common/Components/Gainsight/GainsightSettings.cs",
+      "status": "modified",
+      "additions": 16,
+      "deletions": 0,
+      "patch": "@@ -4,6 +4,9 @@ namespace ProjectSight.Common.Components.Gainsight\n {\n     public class GainsightSettings\n     {\n+        public const string FOR_SYNC = \"ForSync\"; // \"Fake\" region used by mobile to just get GainSight info for sync\n+        public const string UNKNOWN = \"Unknown\"; // \"Fake\" region used when the configuration is missing or invalid\n+\n         /// <summary>\n         /// The endpoint for gainsight in this environment\n         /// </summary>\n@@ -13,6 +16,10 @@ public class GainsightSettings\n         /// </summary>\n         public string Key { get; }\n \n+        /// <summary>\n+        /// The Region/Data Center identifier used for Gainsight global context (e.g. NA/EU/UK/AU).\n+        /// </summary>\n+        public string Region { get; private set; }\n         /// <summary>\n         /// The global context\n         /// </summary>\n@@ -48,6 +55,15 @@ public GainsightSettings(ExternalService service = null)\n         {\n             Endpoint = service?.EndPoint;\n             Key = service?.EndPointKey;\n+\n+            var parameters = JsonConvert.DeserializeObject<TrackingParams>(service?.ParametersJson ?? \"{}\");\n+\n+            Region = parameters?.Region ?? GainsightSettings.UNKNOWN;  \n+        }\n+\n+        private class TrackingParams\n+        {\n+            public string Region { get; set; }\n         }\n     }\n }\n\\ No newline at end of file"
+    },
+    {
+      "filename": "Core/DeployScripts/Packer.manifest",
+      "status": "modified",
+      "additions": 0,
+      "deletions": 1,
+      "patch": "@@ -11,7 +11,6 @@ StartServices.ps1\n Uninstaller.ps1\n UpdateIgnitionMasterDB.ps1\n UpdatePortfolioDBs.ps1\n-Overrides\\MobileService-Web.config\n Overrides\\ServerMonitor-ServerMonitor.exe.config\n Overrides\\ServicesAPI-Web.config\n Overrides\\WebAPI-Web.config"
+    },
+    {
+      "filename": "Core/SQL/Packer.manifest",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "patch": "@@ -96,6 +96,7 @@ update_db_ignition_10.179.sql\n update_db_ignition_10.180.sql\n update_db_ignition_10.181.sql\n update_db_ignition_10.182.sql\n+update_db_ignition_GainSight.sql\n update_db_ignition_template.sql\n update_db_scheduler_1.01.sql\n update_db_template.sql"
+    },
+    {
+      "filename": "Core/SQL/delta_procs.sql",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 6,
+      "patch": "@@ -10,17 +10,16 @@ the code is regenerated.\n \n Name            : sqlpackage.exe\n CommandType     : Application\n-Definition      : C:\\Users\\kcosten\\.dotnet\\tools\\sqlpackage.exe\n+Definition      : C:\\Users\\rroesle\\.dotnet\\tools\\sqlpackage.exe\n Extension       : .exe\n-Path            : C:\\Users\\kcosten\\.dotnet\\tools\\sqlpackage.exe\n-FileVersionInfo : File:             C:\\Users\\kcosten\\.dotnet\\tools\\sqlpackage.exe\n+Path            : C:\\Users\\rroesle\\.dotnet\\tools\\sqlpackage.exe\n+FileVersionInfo : File:             C:\\Users\\rroesle\\.dotnet\\tools\\sqlpackage.exe\n                   InternalName:     sqlpackage.dll\n                   OriginalFilename: sqlpackage.dll\n-                  FileVersion:      162.3.566.1\n+                  FileVersion:      170.0.94.3\n                   FileDescription:  sqlpackage\n                   Product:          Microsoft SQL Server Data-Tier Application Framework\n-                  ProductVersion:   \n-                  162.3.566.1+89d89fe935702c8836ebaf6a03cf61b85118f847.89d89fe935702c8836ebaf6a03cf61b85118f847\n+                  ProductVersion:   170.0.94.3+c80b921bcf1ae44845e9f19885019a7c88c02882\n                   Debug:            False\n                   Patched:          False\n                   PreRelease:       False"
+    },
+    {
+      "filename": "Core/SQL/update_db_ignition_GainSight.sql",
+      "status": "added",
+      "additions": 106,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,106 @@\n+USE IgnitionMaster\n+GO\n+SET QUOTED_IDENTIFIER ON\n+GO\n+  /* Add a utility proc for dropping default constraints */\n+IF OBJECT_ID('dbo.s_util_drop_default') IS NOT NULL\n+  DROP PROCEDURE dbo.s_util_drop_default\n+GO\n+/****** Object: Stored Procedure s_util_drop_default ******/\n+CREATE PROCEDURE dbo.s_util_drop_default\n+  @table_name     sysname ,\n+  @column_name    sysname ,\n+  @no_message     bit = 0\n+AS\n+DECLARE\n+  @default_name   sysname ,\n+  @table_id       int\n+\n+  SELECT @default_name = s.name\n+    FROM (syscolumns sc INNER JOIN sysobjects s ON sc.cdefault = s.id)\n+         INNER JOIN sysobjects pt ON sc.id = pt.id\n+   WHERE sc.name = @column_name\n+     AND pt.name = @table_name\n+\n+  IF @default_name IS NOT NULL\n+    BEGIN\n+      IF @no_message = 0\n+        PRINT 'Dropping constraint ' + @default_name + ' from table ' + @table_name\n+\n+      EXEC('ALTER TABLE dbo.' + @table_name + ' DROP CONSTRAINT ' + @default_name)\n+    END\n+GO\n+\n+  /* Add a utility proc for getting the current environment */\n+IF OBJECT_ID('dbo.fn_util_get_env') IS NOT NULL\n+  DROP FUNCTION dbo.fn_util_get_env\n+GO\n+/****** Object: Function fn_util_get_env ******/\n+CREATE FUNCTION dbo.fn_util_get_env() RETURNS NVARCHAR(100)\n+AS\n+BEGIN\n+DECLARE @environment nvarchar(100)\n+\n+  SELECT @environment =\n+    CASE Environment\n+    WHEN 'projectsight-prod' THEN 'na'\n+    WHEN 'projectsight-prodeu' THEN 'eu'\n+    WHEN 'projectsight-prodau' THEN 'au'\n+    WHEN 'projectsight-produk' THEN 'uk'\n+    WHEN 'projectsight-ps-gvi-p-sql-0' THEN 'hp'\n+    WHEN 'projectsight-fea1' THEN 'fea1'\n+    WHEN 'projectsight-fea2' THEN 'fea2'\n+    WHEN 'projectsight-fea3' THEN 'fea3'\n+    WHEN 'projectsight-fea4' THEN 'fea4'\n+    WHEN 'projectsight-UAT' THEN 'fea5'\n+    WHEN 'projectsight-fea6' THEN 'fea6'\n+    WHEN 'projectsight-qa' THEN 'qa'\n+    WHEN 'projectsight-performance' THEN 'performance'\n+    WHEN 'projectsight-staging' THEN 'staging'\n+    WHEN 'projectsight-labs' THEN 'labs'\n+    ELSE CASE WHEN TIDCallbackURL like 'http://localhost%' THEN 'localhost' ELSE 'other' END\n+    END\n+    FROM Control\n+\n+  RETURN @environment\n+END\n+GO\n+\n+IF OBJECT_ID('tempdb..#update') IS NOT NULL\n+  DROP TABLE #update\n+GO\n+CREATE TABLE #update\n+(\n+    update_data          BIT NOT NULL DEFAULT 0\n+)\n+GO\n+DELETE FROM #update\n+INSERT INTO #update VALUES(0)\n+GO\n+\n+/******************************** BEGINNING OF UPDATES FOR THIS VERSION *************************************/\n+\n+DECLARE @environment nvarchar(100)\n+SELECT @environment = dbo.fn_util_get_env()\n+\n+UPDATE ExternalService \n+   SET ParametersJson = '{\"Region\":\"' + UPPER(@environment) + '\"}'\n+WHERE Type = 201 -- GainSight - Tracking Key\n+  AND (ParametersJson IS NULL OR ParametersJson = '');\n+\n+/******************************** END OF UPDATES FOR THIS VERSION *************************************/\n+\n+/*********************Do not make any changes below this section.  -  Start ***************************/\n+\n+SET QUOTED_IDENTIFIER OFF\n+GO\n+\n+-- DB VERSION NUMBER\n+-- ## UPDATE versions set major = $major, minor = $minor, revision = 0 where program_id = 'Core DB'\n+--UPDATE versions set major = 10, minor = 85, revision = 0 where program_id = 'Core DB'\n+GO\n+DROP PROCEDURE dbo.s_util_drop_default\n+GO\n+\n+/*********************Do not make any changes below this section.  -  End  ****************************/\n+"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/Packer.manifest",
+      "status": "modified",
+      "additions": 0,
+      "deletions": 2,
+      "patch": "@@ -18,7 +18,6 @@ bin\\Google.Apis.Core.dll\n bin\\Google.Apis.dll\n bin\\Google.Cloud.Vision.V1.dll\n bin\\Google.LongRunning.dll\n-bin\\Google.OrTools.dll\n bin\\Google.Protobuf.dll\n bin\\Grpc.Auth.dll\n bin\\Grpc.Core.Api.dll\n@@ -50,7 +49,6 @@ bin\\Microsoft.IdentityModel.JsonWebTokens.dll\n bin\\Microsoft.IdentityModel.Logging.dll\n bin\\Microsoft.IdentityModel.Tokens.dll\n bin\\Microsoft.IO.RecyclableMemoryStream.dll\n-bin\\Microsoft.Net.Http.Headers.dll\n bin\\Microsoft.Solver.Foundation.dll\n bin\\NewRelic.Api.Agent.dll\n bin\\Newtonsoft.Json.Bson.dll"
+    }
+  ],
+  "diff": "diff --git a/Core/Business Layer/DataAccess/GainsightSystem.cs b/Core/Business Layer/DataAccess/GainsightSystem.cs\nindex 9878b462869..2ff7a0e1995 100644\n--- a/Core/Business Layer/DataAccess/GainsightSystem.cs\t\n+++ b/Core/Business Layer/DataAccess/GainsightSystem.cs\t\n@@ -23,6 +23,7 @@ public class GainsightSystem : SystemBase\n         public GainsightSettings GetGainsightSettings(IRequestedBy requestedBy)\n         {\n             GainsightSettings settings = null;\n+\n             try\n             {\n                 settings = new GainsightSettings(Configuration.GetExternalService(ExternalService.Types.GainsightKey));\n@@ -30,7 +31,7 @@ public GainsightSettings GetGainsightSettings(IRequestedBy requestedBy)\n                 {\n                     settings.UserInfo = GenerateUserInfo(requestedBy);\n                     settings.AccountInfo = new GainsightAccountInfo(requestedBy);\n-                    settings.GlobalContext = GenerateGlobalContext(requestedBy);\n+                    settings.GlobalContext = GenerateGlobalContext(requestedBy, settings.Region);\n                 }\n             }\n             catch (Exception ex)\n@@ -85,13 +86,13 @@ public GainsightUserInfo GenerateUserInfo(IRequestedBy requestedBy)\n         /// </summary>\n         /// <returns></returns>\n         [NotNull]\n-        private GainsightGlobalContext GenerateGlobalContext(IRequestedBy requestedBy)\n+        private GainsightGlobalContext GenerateGlobalContext(IRequestedBy requestedBy, string region)\n         {\n             // Exceptions are handled by the caller\n \n             using (var portfolioDB = requestedBy.ProjectID != 0 ? _dbHelperFactory.NewDBHelperPortfolio(requestedBy, requestedBy.ProjectID) : null)\n             {\n-                return GenerateGlobalContext(portfolioDB, requestedBy);\n+                return GenerateGlobalContext(portfolioDB, requestedBy, region);\n             }\n         }\n \n@@ -100,7 +101,7 @@ private GainsightGlobalContext GenerateGlobalContext(IRequestedBy requestedBy)\n         /// </summary>\n         /// <returns></returns>\n         [NotNull]\n-        public GainsightGlobalContext GenerateGlobalContext(IDBHelper portfolioDB, IRequestedBy requestedBy)\n+        public GainsightGlobalContext GenerateGlobalContext(IDBHelper portfolioDB, IRequestedBy requestedBy, string region)\n         {\n             // Exceptions are handled by the caller\n \n@@ -121,7 +122,7 @@ public GainsightGlobalContext GenerateGlobalContext(IDBHelper portfolioDB, IRequ\n                 }\n             }\n \n-            return new GainsightGlobalContext(requestedBy, project);\n+            return new GainsightGlobalContext(requestedBy, project, region);\n         }\n     }\n }\ndiff --git a/Core/Business Layer/DataAccess/SyncSystem.cs b/Core/Business Layer/DataAccess/SyncSystem.cs\nindex ce918ee032b..eeccd6da935 100644\n--- a/Core/Business Layer/DataAccess/SyncSystem.cs\t\n+++ b/Core/Business Layer/DataAccess/SyncSystem.cs\t\n@@ -6,6 +6,7 @@\n \n using ProjectSight.Common.Components;\n using ProjectSight.Common.Components.ApplicationEvents;\n+using ProjectSight.Common.Components.Gainsight;\n using ProjectSight.Common.Components.Mobile;\n \n namespace ProjectSight.DataAccess\n@@ -80,7 +81,7 @@ public MobileSyncPrep PrepareForSync(IRequestedBy requestedBy, int groupID, stri\n                 var groups = new UserGroupSystem().GetUserGroupsForMobile(portfolioDB, new ErrorEncountered());\n                 result.UserGroups = groups.Select(g => new MobileUserGroup(g));\n \n-                var context = gainsight.GenerateGlobalContext(portfolioDB, requestedBy);\n+                var context = gainsight.GenerateGlobalContext(portfolioDB, requestedBy, GainsightSettings.FOR_SYNC);\n \n                 if (requestedBy.ProjectID > 0)\n                 {\ndiff --git a/Core/Common/Components/Gainsight/GainsightGlobalContext.cs b/Core/Common/Components/Gainsight/GainsightGlobalContext.cs\nindex 302374dad2a..20e11d7efa1 100644\n--- a/Core/Common/Components/Gainsight/GainsightGlobalContext.cs\n+++ b/Core/Common/Components/Gainsight/GainsightGlobalContext.cs\n@@ -9,6 +9,9 @@ namespace ProjectSight.Common.Components.Gainsight\n     /// </summary>\n     public class GainsightGlobalContext\n     {\n+        [JsonProperty(\"Data_Center\")]\n+        public string DataCenter { get; set; }\n+\n         // user properties\n         [JsonProperty(\"Is_Portfolio_Admin\")]\n         public bool IsPortfolioAdmin { get; set; }\n@@ -112,7 +115,7 @@ protected GainsightGlobalContext()\n             // serialization\n         }\n \n-        public GainsightGlobalContext(IRequestedBy requestedBy, GainsightProjectDetails projectExtract)\n+        public GainsightGlobalContext(IRequestedBy requestedBy, GainsightProjectDetails projectExtract, string region)\n         {\n             var user = requestedBy.User;\n \n@@ -139,6 +142,9 @@ public GainsightGlobalContext(IRequestedBy requestedBy, GainsightProjectDetails\n                 isUserProjectAdmin = !user.FeatureIsDenied(FeaturePermission.IDs.Admin_ProjectSettings);\n             }\n \n+            // Data Center Regions \n+            DataCenter = region;\n+\n             // user properties\n             IsPortfolioAdmin = isUserPortfolioAdmin;\n             IsProjectAdmin = isUserProjectAdmin;\ndiff --git a/Core/Common/Components/Gainsight/GainsightSettings.cs b/Core/Common/Components/Gainsight/GainsightSettings.cs\nindex f26f25a5a02..7dce30cbafa 100644\n--- a/Core/Common/Components/Gainsight/GainsightSettings.cs\n+++ b/Core/Common/Components/Gainsight/GainsightSettings.cs\n@@ -4,6 +4,9 @@ namespace ProjectSight.Common.Components.Gainsight\n {\n     public class GainsightSettings\n     {\n+        public const string FOR_SYNC = \"ForSync\"; // \"Fake\" region used by mobile to just get GainSight info for sync\n+        public const string UNKNOWN = \"Unknown\"; // \"Fake\" region used when the configuration is missing or invalid\n+\n         /// <summary>\n         /// The endpoint for gainsight in this environment\n         /// </summary>\n@@ -13,6 +16,10 @@ public class GainsightSettings\n         /// </summary>\n         public string Key { get; }\n \n+        /// <summary>\n+        /// The Region/Data Center identifier used for Gainsight global context (e.g. NA/EU/UK/AU).\n+        /// </summary>\n+        public string Region { get; private set; }\n         /// <summary>\n         /// The global context\n         /// </summary>\n@@ -48,6 +55,15 @@ public GainsightSettings(ExternalService service = null)\n         {\n             Endpoint = service?.EndPoint;\n             Key = service?.EndPointKey;\n+\n+            var parameters = JsonConvert.DeserializeObject<TrackingParams>(service?.ParametersJson ?? \"{}\");\n+\n+            Region = parameters?.Region ?? GainsightSettings.UNKNOWN;  \n+        }\n+\n+        private class TrackingParams\n+        {\n+            public string Region { get; set; }\n         }\n     }\n }\n\\ No newline at end of file\ndiff --git a/Core/DeployScripts/Packer.manifest b/Core/DeployScripts/Packer.manifest\nindex 8571534495d..ca22a616384 100644\n--- a/Core/DeployScripts/Packer.manifest\n+++ b/Core/DeployScripts/Packer.manifest\n@@ -11,7 +11,6 @@ StartServices.ps1\n Uninstaller.ps1\n UpdateIgnitionMasterDB.ps1\n UpdatePortfolioDBs.ps1\n-Overrides\\MobileService-Web.config\n Overrides\\ServerMonitor-ServerMonitor.exe.config\n Overrides\\ServicesAPI-Web.config\n Overrides\\WebAPI-Web.config\ndiff --git a/Core/SQL/Packer.manifest b/Core/SQL/Packer.manifest\nindex 742828fcb68..fc70e79e626 100644\n--- a/Core/SQL/Packer.manifest\n+++ b/Core/SQL/Packer.manifest\n@@ -96,6 +96,7 @@ update_db_ignition_10.179.sql\n update_db_ignition_10.180.sql\n update_db_ignition_10.181.sql\n update_db_ignition_10.182.sql\n+update_db_ignition_GainSight.sql\n update_db_ignition_template.sql\n update_db_scheduler_1.01.sql\n update_db_template.sql\ndiff --git a/Core/SQL/delta_procs.sql b/Core/SQL/delta_procs.sql\nindex 8a5248f2856..3e0136ae8f8 100644\n--- a/Core/SQL/delta_procs.sql\n+++ b/Core/SQL/delta_procs.sql\n@@ -10,17 +10,16 @@ the code is regenerated.\n \n Name            : sqlpackage.exe\n CommandType     : Application\n-Definition      : C:\\Users\\kcosten\\.dotnet\\tools\\sqlpackage.exe\n+Definition      : C:\\Users\\rroesle\\.dotnet\\tools\\sqlpackage.exe\n Extension       : .exe\n-Path            : C:\\Users\\kcosten\\.dotnet\\tools\\sqlpackage.exe\n-FileVersionInfo : File:             C:\\Users\\kcosten\\.dotnet\\tools\\sqlpackage.exe\n+Path            : C:\\Users\\rroesle\\.dotnet\\tools\\sqlpackage.exe\n+FileVersionInfo : File:             C:\\Users\\rroesle\\.dotnet\\tools\\sqlpackage.exe\n                   InternalName:     sqlpackage.dll\n                   OriginalFilename: sqlpackage.dll\n-                  FileVersion:      162.3.566.1\n+                  FileVersion:      170.0.94.3\n                   FileDescription:  sqlpackage\n                   Product:          Microsoft SQL Server Data-Tier Application Framework\n-                  ProductVersion:   \n-                  162.3.566.1+89d89fe935702c8836ebaf6a03cf61b85118f847.89d89fe935702c8836ebaf6a03cf61b85118f847\n+                  ProductVersion:   170.0.94.3+c80b921bcf1ae44845e9f19885019a7c88c02882\n                   Debug:            False\n                   Patched:          False\n                   PreRelease:       False\ndiff --git a/Core/SQL/update_db_ignition_GainSight.sql b/Core/SQL/update_db_ignition_GainSight.sql\nnew file mode 100644\nindex 00000000000..bf22bbe94b6\n--- /dev/null\n+++ b/Core/SQL/update_db_ignition_GainSight.sql\n@@ -0,0 +1,106 @@\n+USE IgnitionMaster\n+GO\n+SET QUOTED_IDENTIFIER ON\n+GO\n+  /* Add a utility proc for dropping default constraints */\n+IF OBJECT_ID('dbo.s_util_drop_default') IS NOT NULL\n+  DROP PROCEDURE dbo.s_util_drop_default\n+GO\n+/****** Object: Stored Procedure s_util_drop_default ******/\n+CREATE PROCEDURE dbo.s_util_drop_default\n+  @table_name     sysname ,\n+  @column_name    sysname ,\n+  @no_message     bit = 0\n+AS\n+DECLARE\n+  @default_name   sysname ,\n+  @table_id       int\n+\n+  SELECT @default_name = s.name\n+    FROM (syscolumns sc INNER JOIN sysobjects s ON sc.cdefault = s.id)\n+         INNER JOIN sysobjects pt ON sc.id = pt.id\n+   WHERE sc.name = @column_name\n+     AND pt.name = @table_name\n+\n+  IF @default_name IS NOT NULL\n+    BEGIN\n+      IF @no_message = 0\n+        PRINT 'Dropping constraint ' + @default_name + ' from table ' + @table_name\n+\n+      EXEC('ALTER TABLE dbo.' + @table_name + ' DROP CONSTRAINT ' + @default_name)\n+    END\n+GO\n+\n+  /* Add a utility proc for getting the current environment */\n+IF OBJECT_ID('dbo.fn_util_get_env') IS NOT NULL\n+  DROP FUNCTION dbo.fn_util_get_env\n+GO\n+/****** Object: Function fn_util_get_env ******/\n+CREATE FUNCTION dbo.fn_util_get_env() RETURNS NVARCHAR(100)\n+AS\n+BEGIN\n+DECLARE @environment nvarchar(100)\n+\n+  SELECT @environment =\n+    CASE Environment\n+    WHEN 'projectsight-prod' THEN 'na'\n+    WHEN 'projectsight-prodeu' THEN 'eu'\n+    WHEN 'projectsight-prodau' THEN 'au'\n+    WHEN 'projectsight-produk' THEN 'uk'\n+    WHEN 'projectsight-ps-gvi-p-sql-0' THEN 'hp'\n+    WHEN 'projectsight-fea1' THEN 'fea1'\n+    WHEN 'projectsight-fea2' THEN 'fea2'\n+    WHEN 'projectsight-fea3' THEN 'fea3'\n+    WHEN 'projectsight-fea4' THEN 'fea4'\n+    WHEN 'projectsight-UAT' THEN 'fea5'\n+    WHEN 'projectsight-fea6' THEN 'fea6'\n+    WHEN 'projectsight-qa' THEN 'qa'\n+    WHEN 'projectsight-performance' THEN 'performance'\n+    WHEN 'projectsight-staging' THEN 'staging'\n+    WHEN 'projectsight-labs' THEN 'labs'\n+    ELSE CASE WHEN TIDCallbackURL like 'http://localhost%' THEN 'localhost' ELSE 'other' END\n+    END\n+    FROM Control\n+\n+  RETURN @environment\n+END\n+GO\n+\n+IF OBJECT_ID('tempdb..#update') IS NOT NULL\n+  DROP TABLE #update\n+GO\n+CREATE TABLE #update\n+(\n+    update_data          BIT NOT NULL DEFAULT 0\n+)\n+GO\n+DELETE FROM #update\n+INSERT INTO #update VALUES(0)\n+GO\n+\n+/******************************** BEGINNING OF UPDATES FOR THIS VERSION *************************************/\n+\n+DECLARE @environment nvarchar(100)\n+SELECT @environment = dbo.fn_util_get_env()\n+\n+UPDATE ExternalService \n+   SET ParametersJson = '{\"Region\":\"' + UPPER(@environment) + '\"}'\n+WHERE Type = 201 -- GainSight - Tracking Key\n+  AND (ParametersJson IS NULL OR ParametersJson = '');\n+\n+/******************************** END OF UPDATES FOR THIS VERSION *************************************/\n+\n+/*********************Do not make any changes below this section.  -  Start ***************************/\n+\n+SET QUOTED_IDENTIFIER OFF\n+GO\n+\n+-- DB VERSION NUMBER\n+-- ## UPDATE versions set major = $major, minor = $minor, revision = 0 where program_id = 'Core DB'\n+--UPDATE versions set major = 10, minor = 85, revision = 0 where program_id = 'Core DB'\n+GO\n+DROP PROCEDURE dbo.s_util_drop_default\n+GO\n+\n+/*********************Do not make any changes below this section.  -  End  ****************************/\n+\ndiff --git a/Core/Web Layer/WebUI/Packer.manifest b/Core/Web Layer/WebUI/Packer.manifest\nindex d94aee3c4a1..5d50feadefe 100644\n--- a/Core/Web Layer/WebUI/Packer.manifest\t\n+++ b/Core/Web Layer/WebUI/Packer.manifest\t\n@@ -18,7 +18,6 @@ bin\\Google.Apis.Core.dll\n bin\\Google.Apis.dll\n bin\\Google.Cloud.Vision.V1.dll\n bin\\Google.LongRunning.dll\n-bin\\Google.OrTools.dll\n bin\\Google.Protobuf.dll\n bin\\Grpc.Auth.dll\n bin\\Grpc.Core.Api.dll\n@@ -50,7 +49,6 @@ bin\\Microsoft.IdentityModel.JsonWebTokens.dll\n bin\\Microsoft.IdentityModel.Logging.dll\n bin\\Microsoft.IdentityModel.Tokens.dll\n bin\\Microsoft.IO.RecyclableMemoryStream.dll\n-bin\\Microsoft.Net.Http.Headers.dll\n bin\\Microsoft.Solver.Foundation.dll\n bin\\NewRelic.Api.Agent.dll\n bin\\Newtonsoft.Json.Bson.dll\n"
+}

@@ -1,0 +1,350 @@
+================================================================================
+REPOSITORY FINE-TUNING RESEARCH — DOCUMENT INDEX
+Your Guide to Fine-Tuning Qwen 35B with Commits/PRs/Comments
+June 16, 2026
+================================================================================
+
+QUICK NAVIGATION
+================================================================================
+
+NEW TO THIS RESEARCH?
+├─ Start here: EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (11 KB, 5 min)
+├─ Then read: PAPER_REFERENCES_READING_GUIDE.txt (13 KB, 10 min)
+├─ Before starting: PRACTICAL_DATA_EXTRACTION_GUIDE.txt (18 KB, 1 hour implementation)
+└─ Deep dive: RESEARCH_REPO_FINETUNE_ANALYSIS.txt (24 KB, detailed technical)
+
+WANT TO UNDERSTAND THE PAPERS?
+├─ Read: PAPER_REFERENCES_READING_GUIDE.txt
+├─ Download PDFs from arXiv:
+│  ├─ ExpRL (2606.17024) — most relevant to your case
+│  ├─ ContextRL (2606.17053) — learning from feedback
+│  ├─ HAW (2606.17043) — sparse reward RL
+│  └─ Value Axis (2606.17056) — optional, for confidence
+└─ Follow 4-hour reading schedule provided
+
+READY TO EXTRACT DATA?
+├─ Read: PRACTICAL_DATA_EXTRACTION_GUIDE.txt (step-by-step)
+├─ Run: Python script provided in guide
+├─ Validate: Quality checks included
+└─ Output: training_sft.jsonl + training_rl.jsonl ready for Unsloth
+
+NEED TECHNICAL DETAILS?
+├─ Architecture: RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Sections 2-3)
+├─ Implementation workflow: RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 4)
+├─ Data format examples: PRACTICAL_DATA_EXTRACTION_GUIDE.txt (Section 6)
+└─ Success criteria: RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 7)
+
+================================================================================
+DOCUMENT OVERVIEW
+================================================================================
+
+1. EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (11 KB)
+   ├─ Purpose: Quick overview of validity + feasibility
+   ├─ Audience: Decision makers, busy researchers
+   ├─ Time to read: 5 minutes
+   ├─ Contains:
+   │  ├─ Validity assessment (YES, grounded in 4 papers)
+   │  ├─ Why better than databases
+   │  ├─ 4-week implementation plan (sketch)
+   │  ├─ Expected outcomes (4.25x improvement)
+   │  ├─ Technical requirements (single GPU)
+   │  ├─ Research novelty (publishable if >75% success)
+   │  └─ Next steps (this week)
+   ├─ Start with this if: You want the high-level view
+   └─ Then proceed to: PAPER_REFERENCES_READING_GUIDE.txt
+
+2. PAPER_REFERENCES_READING_GUIDE.txt (13 KB)
+   ├─ Purpose: Understand which papers to read + why
+   ├─ Audience: Researchers, ML practitioners
+   ├─ Time to read: 15 minutes (without papers)
+   ├─ Contains:
+   │  ├─ Full reference for 4 key papers
+   │  ├─ Direct arXiv links (abstract + PDF)
+   │  ├─ Why each paper matters for YOUR work
+   │  ├─ Sections to focus on
+   │  ├─ Key takeaways (before/after reading)
+   │  ├─ Recommended reading schedule (4 hours)
+   │  ├─ Quick concept definitions
+   │  └─ ArXiv access tips
+   ├─ Start with this if: You want to understand the foundation
+   └─ Then: Read the papers themselves (4 hours)
+
+3. RESEARCH_REPO_FINETUNE_ANALYSIS.txt (24 KB)
+   ├─ Purpose: Detailed technical analysis + full workflow
+   ├─ Audience: ML engineers, research teams
+   ├─ Time to read: 45 minutes
+   ├─ Contains:
+   │  ├─ Validity assessment with evidence
+   │  ├─ Mapping of repo scenario → paper concepts
+   │  ├─ 4 key papers in detail
+   │  ├─ Concrete workflow for each phase (Week 1-4)
+   │  ├─ Data format specifications
+   │  ├─ Expected improvements (quantified)
+   │  ├─ Technical implementation notes
+   │  ├─ Success criteria (MVP checklist)
+   │  ├─ Research validity checklist
+   │  └─ Next steps (week-by-week)
+   ├─ Start with this if: You want the complete picture before implementation
+   └─ Reference during: Weeks 1-4 as you implement
+
+4. PRACTICAL_DATA_EXTRACTION_GUIDE.txt (18 KB)
+   ├─ Purpose: Step-by-step guide to extract data from your repo
+   ├─ Audience: Data engineers, implementers
+   ├─ Time to implement: 2-3 hours (depending on repo size)
+   ├─ Contains:
+   │  ├─ Tools required (git, gh CLI, Python)
+   │  ├─ Step 1: Extract commits (git log)
+   │  ├─ Step 2: Extract PRs + reviews (gh CLI)
+   │  ├─ Step 3: Correlate data (commits → PR outcomes)
+   │  ├─ Step 4: Quality checks + validation
+   │  ├─ Step 5: Create train/val/test splits
+   │  ├─ Step 6: Format for Unsloth training
+   │  ├─ Complete Python script (ready to run)
+   │  ├─ Data format examples (JSON)
+   │  └─ Final checklist before training
+   ├─ Start with this if: You're ready to extract data
+   └─ Run during: Week 1
+
+================================================================================
+DOCUMENT RELATIONSHIPS
+================================================================================
+
+Dependency graph:
+
+                    ┌─────────────────────────┐
+                    │   You start here        │
+                    │ (5 min decision point)  │
+                    └────────────┬────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │ Want more details?      │
+                    │ Read papers? Continue?  │
+                    └────────────┬────────────┘
+                                 │
+         ┌───────────────────────┼──────────────────────┐
+         │                       │                      │
+    ┌────▼──────┐    ┌──────────▼──────┐    ┌─────────▼──────┐
+    │    YES    │    │  YES, read      │    │  Ready to      │
+    │ (5% docs) │    │  papers first   │    │  extract data  │
+    └────┬──────┘    └────────┬────────┘    └────────┬───────┘
+         │                    │                       │
+    ┌────▼────────────────────▼──────┐    ┌──────────▼────────────┐
+    │ PAPER_REFERENCES...txt          │    │ PRACTICAL_EXTRACTION  │
+    │ (10 min read)                   │    │ (2 hours implement)   │
+    │ + Papers (4 hours read)         │    │                       │
+    └────┬─────────────────────┬──────┘    └──────────┬────────────┘
+         │                     │                      │
+         └─────────┬───────────┴──────────────────────┘
+                   │
+         ┌─────────▼──────────┐
+         │ RESEARCH_ANALYSIS  │
+         │ (45 min deep dive) │
+         │ + Implement Weeks  │
+         │ 1-4                │
+         └────────────────────┘
+
+
+Reading path for BUSY PEOPLE (30 min):
+  EXECUTIVE_SUMMARY → skim PAPER_REFERENCES → READY TO GO
+
+Reading path for THOROUGH PEOPLE (5 hours):
+  EXECUTIVE_SUMMARY → PAPER_REFERENCES → read 4 papers → RESEARCH_ANALYSIS → PRACTICAL_EXTRACTION
+
+Implementation path:
+  PRACTICAL_EXTRACTION (Week 1) → RESEARCH_ANALYSIS (Weeks 2-4 reference)
+
+================================================================================
+SECTION GUIDE (by topic)
+================================================================================
+
+If you want to learn about:
+
+VALIDITY OF APPROACH:
+  → EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (Section 1)
+  → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Sections 1-2)
+
+WHY REPOSITORY DATA IS GOOD:
+  → EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (Section 2)
+  → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 2)
+
+WHICH PAPERS APPLY:
+  → PAPER_REFERENCES_READING_GUIDE.txt (Sections 1-4)
+  → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 3)
+
+THE 4-WEEK PLAN:
+  → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 4)
+  → EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (Section 3)
+
+HOW TO EXTRACT DATA:
+  → PRACTICAL_DATA_EXTRACTION_GUIDE.txt (all sections)
+
+DATA FORMATS:
+  → PRACTICAL_DATA_EXTRACTION_GUIDE.txt (Sections 6-7)
+  → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 5)
+
+EXPECTED IMPROVEMENTS:
+  → EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (Section 4)
+  → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 4, subsection "Expected Outcomes")
+
+TECHNICAL REQUIREMENTS:
+  → EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (Section 5)
+  → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 6)
+
+SUCCESS CRITERIA:
+  → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Section 7)
+
+HOW TO READ THE PAPERS:
+  → PAPER_REFERENCES_READING_GUIDE.txt (Sections "Reading Schedule" + "Key Concepts")
+
+================================================================================
+FILE LOCATIONS
+================================================================================
+
+All documents are located at:
+
+C:\Users\eherrad\
+
+Specifically:
+├─ EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (11 KB)
+├─ PAPER_REFERENCES_READING_GUIDE.txt (13 KB)
+├─ RESEARCH_REPO_FINETUNE_ANALYSIS.txt (24 KB)
+├─ PRACTICAL_DATA_EXTRACTION_GUIDE.txt (18 KB)
+└─ (this file) REPO_FINETUNING_DOCUMENT_INDEX.txt
+
+From Linux terminal (WSL):
+  /mnt/c/Users/eherrad/*.txt
+
+================================================================================
+TIMELINE: WHAT TO READ WHEN
+================================================================================
+
+TODAY (5 minutes):
+  □ Read EXECUTIVE_SUMMARY_REPO_FINETUNING.txt
+  □ Decide: Yes, I want to do this
+
+THIS WEEK (during 1 hour):
+  □ Read PAPER_REFERENCES_READING_GUIDE.txt
+  □ Plan 4-hour paper reading (find time this weekend)
+
+THIS WEEKEND (4 hours):
+  □ Read ExpRL (30 min)
+  □ Read ContextRL (30 min)
+  □ Read HAW (45 min)
+  □ Read Value Axis (20 min, optional)
+  □ Take notes on key concepts
+
+NEXT WEEK (2 hours):
+  □ Review RESEARCH_REPO_FINETUNE_ANALYSIS.txt
+  □ Plan data extraction
+
+WEEK 1 EXECUTION (6 hours):
+  □ Use PRACTICAL_DATA_EXTRACTION_GUIDE.txt
+  □ Run extraction script
+  □ Validate data quality
+  □ Create training splits
+
+WEEKS 2-4:
+  □ Reference RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Sections 4 + 6)
+  □ Implement each phase
+
+================================================================================
+QUICK REFERENCE TABLE
+================================================================================
+
+Document                                Size    Time    Best For
+────────────────────────────────────────────────────────────────────────────
+EXECUTIVE_SUMMARY_REPO_FINETUNING      11 KB   5 min   Quick overview
+PAPER_REFERENCES_READING_GUIDE          13 KB   15 min  Understanding papers
+RESEARCH_REPO_FINETUNE_ANALYSIS         24 KB   45 min  Technical deep-dive
+PRACTICAL_DATA_EXTRACTION_GUIDE         18 KB   2 h     Implementation
+────────────────────────────────────────────────────────────────────────────
+TOTAL                                   66 KB   3 h     Complete preparation
+
+================================================================================
+FREQUENTLY ASKED QUESTIONS
+================================================================================
+
+Q: Which document should I read first?
+A: EXECUTIVE_SUMMARY_REPO_FINETUNING.txt (5 min) — will tell you if to proceed.
+
+Q: Do I need to read all the papers?
+A: No. Read ExpRL + ContextRL + HAW (~1.5 hours). Value Axis is optional.
+
+Q: Can I skip reading the papers?
+A: Possible but not recommended. Papers show WHY the approach works.
+
+Q: Which document do I use while implementing?
+A: PRACTICAL_DATA_EXTRACTION_GUIDE.txt (Week 1) → RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Weeks 2-4)
+
+Q: Where are the actual Python scripts?
+A: In PRACTICAL_DATA_EXTRACTION_GUIDE.txt (Section "Complete Extraction Script")
+
+Q: What if my repository is too small?
+A: Check RESEARCH_REPO_FINETUNE_ANALYSIS.txt (Risk Assessment) for minimum requirements.
+
+Q: How do I know if I'm ready to start?
+A: Go through the checklist in PRACTICAL_DATA_EXTRACTION_GUIDE.txt (final section).
+
+Q: Is there code I can run immediately?
+A: Yes, extract_repo_data.py provided in PRACTICAL_DATA_EXTRACTION_GUIDE.txt
+
+Q: Can I modify the approach?
+A: Yes, but RESEARCH_REPO_FINETUNE_ANALYSIS.txt explains the rationale for each step.
+
+Q: What if I get stuck?
+A: Refer back to RESEARCH_REPO_FINETUNE_ANALYSIS.txt (all details explained there).
+
+================================================================================
+DOCUMENT STATISTICS
+================================================================================
+
+Total content: 66 KB (4 documents)
+Total reading time: ~3 hours (papers not included)
+Total paper reading: ~4 hours (if reading all 4)
+Total implementation time (Week 1): ~6 hours
+Total project time (Weeks 1-4): ~85 hours
+
+Density:
+├─ Executive summary: High-level overview (11 KB for full project)
+├─ Paper guide: Deep foundation (13 KB for understanding)
+├─ Research analysis: Complete technical (24 KB for reference)
+└─ Practical guide: Implementation ready (18 KB for doing)
+
+================================================================================
+PRINTING / SHARING NOTES
+================================================================================
+
+If you want to print or share:
+
+All files are plain text (.txt):
+  ✓ Print-friendly (no formatting issues)
+  ✓ Easy to copy-paste
+  ✓ No special fonts needed
+  ✓ Can be read in any editor
+
+Recommended print setup:
+  ├─ Paper size: Letter (8.5" x 11")
+  ├─ Margins: 0.5" all sides
+  ├─ Font: Courier New, 10pt
+  ├─ Pages per doc:
+  │  ├─ EXECUTIVE_SUMMARY: 4 pages
+  │  ├─ PAPER_REFERENCES: 5 pages
+  │  ├─ RESEARCH_ANALYSIS: 9 pages
+  │  └─ PRACTICAL_GUIDE: 7 pages
+  └─ Total: ~25 pages printed
+
+================================================================================
+NEXT ACTION
+================================================================================
+
+1. Open: EXECUTIVE_SUMMARY_REPO_FINETUNING.txt
+2. Read: Sections 1-3 (10 minutes)
+3. Decide: Continue? (YES/NO)
+4. If YES: Read PAPER_REFERENCES_READING_GUIDE.txt
+5. Then: Start data extraction next week
+
+================================================================================
+Generated: June 16, 2026
+Document Navigation Index
+For Qwen 35B Fine-Tuning with Repository Data
+================================================================================

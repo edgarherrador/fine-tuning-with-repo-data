@@ -1,0 +1,92 @@
+{
+  "number": 10479,
+  "title": "Fix 90°/270° rotation in TransformToPdfPoint: restore correct cross-d…",
+  "body": "…imensional scaling",
+  "state": "open",
+  "draft": true,
+  "labels": [],
+  "author": "sevilbk-trimble",
+  "created_at": "2026-04-08T02:50:42Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "213797852a5bae61d57aba8955ce31c573c4805d",
+  "head_branch": "wip/Sevil/TestFailures",
+  "head_sha": "8d413f876ffcda3c2ba1f6b023ddac5ba6147bc8",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nThis PR updates the coordinate transform used when exporting 360 video station/trajectory annotations to PDF, aiming to correct placement on pages rotated 90°/270°.\n\n**Changes:**\n- Refactors `TransformToPdfPoint` to precompute de-normalized coordinates and apply rotation-specific mapping.\n- Adjusts 90°/270° rotation math to “swap” axes using the precomputed values.\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-04-08T02:58:31Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "sevilbk-trimble",
+      "submitted_at": "2026-04-08T06:07:10Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "sevilbk-trimble",
+      "submitted_at": "2026-04-08T06:07:20Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs",
+      "line": 967,
+      "body": "`directionX/directionY` are documented as normalized *visual* coordinates, but `x`/`y` are always de-normalized using the unrotated `cropBox.Width()`/`cropBox.Height()`. For `e_90`/`e_270` this makes the mapping scale against the wrong physical dimension (and can push `finalX`/`finalY` outside the crop box on non-square pages). Consider computing visual page dimensions by swapping width/height when rotation is 90/270 (similar to `PDFPageProcessor.cs:187-188`), and using those dimensions in the de-normalization / mapping logic.",
+      "author": "Copilot",
+      "created_at": "2026-04-08T02:58:30Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs",
+      "line": 976,
+      "body": "This rotation-specific coordinate math is easy to regress (especially on non-square pages). The existing coordinate tests only assert a single interior point and won’t catch dimension-swap or boundary issues for `e_90`/`e_270`. Add test cases that cover the corners (0/1 extremes) and a non-square crop box for both rotations so incorrect scaling shows up immediately.",
+      "author": "Copilot",
+      "created_at": "2026-04-08T02:58:31Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs",
+      "line": 976,
+      "body": "Ignore.",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-04-08T06:07:10Z",
+      "in_reply_to_id": 3048946199
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs",
+      "line": 967,
+      "body": "Incorrect.",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-04-08T06:07:20Z",
+      "in_reply_to_id": 3048946176
+    }
+  ],
+  "issue_comments": [
+    {
+      "body": "@sevilbk-trimble I believe I have addressed this issue (or at least accounted for it) in #10481.\r\n\r\nPlease test if this still needs to be addressed. We need to be very confident that this does not break the Site Capture processing and that all stations + annotations are properly positioned for multiple PDF rotations.\r\n\r\nIf you Westminster Campus drawing has a 90degree rotation and NREL-EMAPS-level1(Full-res).pdf has a 0degree rotation.",
+      "author": "AdamCollins",
+      "created_at": "2026-04-08T14:23:22Z"
+    }
+  ],
+  "files": [
+    {
+      "filename": "Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs",
+      "status": "modified",
+      "additions": 14,
+      "deletions": 16,
+      "patch": "@@ -960,37 +960,35 @@ private Point TransformToPdfPoint(double directionX, double directionY, NativePa\n             var width = cropBox.Width();\n             var height = cropBox.Height();\n \n-            // Scale and transform per rotation.\n+            // De-normalize coordinates against the physical (unrotated) page dimensions.\n             // directionX/Y are normalized visual coordinates (0-1, origin top-left).\n-            // Physical PDF coordinates have origin at bottom-left of the unrotated crop box.\n-            // For rotated pages the visual axes map to different physical axes,\n-            // so each case must scale against the correct physical dimension.\n+            var x = directionX * width;\n+            var y = directionY * height;\n+\n+            // Map from visual space to physical PDF space (origin bottom-left, unrotated).\n+            // For rotated pages the visual axes map to different physical axes.\n             double finalX, finalY;\n             switch (rotation)\n             {\n                 case Page.Rotate.e_90:\n-                    // 90° CW: visual X -> physical Y (scaled by height), visual Y -> physical X (scaled by width)\n-                    finalX = directionY * width;\n-                    finalY = directionX * height;\n+                    finalX = y;\n+                    finalY = x;\n                     break;\n \n                 case Page.Rotate.e_180:\n-                    // 180°: both axes inverted relative to e_0\n-                    finalX = (1.0 - directionX) * width;\n-                    finalY = directionY * height;\n+                    finalX = width - x;\n+                    finalY = y;\n                     break;\n \n                 case Page.Rotate.e_270:\n-                    // 270° CW: visual X -> physical Y inverted (scaled by height), visual Y -> physical X inverted (scaled by width)\n-                    finalX = (1.0 - directionY) * width;\n-                    finalY = (1.0 - directionX) * height;\n+                    finalX = width - y;\n+                    finalY = height - x;\n                     break;\n \n                 case Page.Rotate.e_0:\n                 default:\n-                    // Visual X -> physical X (scaled by width), visual Y -> physical Y inverted (scaled by height)\n-                    finalX = directionX * width;\n-                    finalY = (1.0 - directionY) * height;\n+                    finalX = x;\n+                    finalY = height - y;\n                     break;\n             }\n "
+    }
+  ],
+  "diff": "diff --git a/Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs b/Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs\nindex 811c275a1c1..61ff48ceb32 100644\n--- a/Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs\t\n+++ b/Core/Business Layer/DataAccess/Drawings/PDFAnnotationProcessor.cs\t\n@@ -960,37 +960,35 @@ private Point TransformToPdfPoint(double directionX, double directionY, NativePa\n             var width = cropBox.Width();\n             var height = cropBox.Height();\n \n-            // Scale and transform per rotation.\n+            // De-normalize coordinates against the physical (unrotated) page dimensions.\n             // directionX/Y are normalized visual coordinates (0-1, origin top-left).\n-            // Physical PDF coordinates have origin at bottom-left of the unrotated crop box.\n-            // For rotated pages the visual axes map to different physical axes,\n-            // so each case must scale against the correct physical dimension.\n+            var x = directionX * width;\n+            var y = directionY * height;\n+\n+            // Map from visual space to physical PDF space (origin bottom-left, unrotated).\n+            // For rotated pages the visual axes map to different physical axes.\n             double finalX, finalY;\n             switch (rotation)\n             {\n                 case Page.Rotate.e_90:\n-                    // 90° CW: visual X -> physical Y (scaled by height), visual Y -> physical X (scaled by width)\n-                    finalX = directionY * width;\n-                    finalY = directionX * height;\n+                    finalX = y;\n+                    finalY = x;\n                     break;\n \n                 case Page.Rotate.e_180:\n-                    // 180°: both axes inverted relative to e_0\n-                    finalX = (1.0 - directionX) * width;\n-                    finalY = directionY * height;\n+                    finalX = width - x;\n+                    finalY = y;\n                     break;\n \n                 case Page.Rotate.e_270:\n-                    // 270° CW: visual X -> physical Y inverted (scaled by height), visual Y -> physical X inverted (scaled by width)\n-                    finalX = (1.0 - directionY) * width;\n-                    finalY = (1.0 - directionX) * height;\n+                    finalX = width - y;\n+                    finalY = height - x;\n                     break;\n \n                 case Page.Rotate.e_0:\n                 default:\n-                    // Visual X -> physical X (scaled by width), visual Y -> physical Y inverted (scaled by height)\n-                    finalX = directionX * width;\n-                    finalY = (1.0 - directionY) * height;\n+                    finalX = x;\n+                    finalY = height - y;\n                     break;\n             }\n \n"
+}

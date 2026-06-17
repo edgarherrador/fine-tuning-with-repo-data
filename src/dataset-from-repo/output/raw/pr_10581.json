@@ -1,0 +1,86 @@
+{
+  "number": 10581,
+  "title": "PS-66826 - Portfolio level Distribution Lists are not synced",
+  "body": "(waiting on forced)",
+  "state": "open",
+  "draft": true,
+  "labels": [],
+  "author": "rroesler",
+  "created_at": "2026-04-18T04:38:51Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "879927767a5d7abd2a77de0b82c35309afb64b92",
+  "head_branch": "wip/PS-67384---Portfolio-level-Distribution-Lists-are-not-synced",
+  "head_sha": "9b910ecf918c4402b28644d1c1b269d4a5f7d68b",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nFixes mobile sync not returning portfolio-level (ProjectID NULL) distribution lists when syncing for a specific project.\n\n**Changes:**\n- Updated `s_enc_get_DistributionLists_for_sync` to include portfolio-level lists (`ProjectID IS NULL`) for any `@ProjectID`.\n- Regenerated SQL proc delta/hash artifacts to reflect the stored procedure change.\n- Updated packer manifests (WebUI + SQL) to adjust packaged outputs.\n\n### Reviewed changes\n\nCopilot reviewed 5 out of 5 changed files in this pull request and generated 2 comments.\n\n<details>\n<summary>Show a summary per file</summary>\n\n| File | Description |\r\n| ---- | ----------- |\r\n| Core/Web Layer/WebUI/Packer.manifest | Adjusts packaged WebUI binaries (currently drops `Google.Protobuf.dll` and adds `Google.OrTools.dll`). |\r\n| Core/SQL/record_procs_hash.sql | Updates stored-proc hash/version tracking to match SQL changes. |\r\n| Core/SQL/delta_procs.sql | Generated delta to apply the updated `s_enc_get_DistributionLists_for_sync` in upgrades. |\r\n| Core/SQL/base_procs.sql | Changes sync proc filtering to include portfolio-level distribution lists for project-scoped sync. |\r\n| Core/SQL/Packer.manifest | Adds an Ignition update script to the SQL package manifest (currently references a missing file). |\n</details>\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-04-18T04:42:15Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Web Layer/WebUI/Packer.manifest",
+      "line": 21,
+      "body": "`Core/Web Layer/WebUI/Packer.manifest` is marked as generated, but this change removes `bin\\Google.Protobuf.dll` and replaces it with `bin\\Google.OrTools.dll`. The WebUI bundle still includes several Google/Grpc assemblies that depend on `Google.Protobuf`, and other packer manifests in the repo keep `Google.Protobuf.dll` alongside `Google.OrTools.dll`. Update `Packer.targets` to include `Google.OrTools.dll` without dropping `Google.Protobuf.dll`, then regenerate the manifest so the packaged WebUI output includes both dependencies.\n```suggestion\nbin\\Google.OrTools.dll\nbin\\Google.Protobuf.dll\n```",
+      "author": "Copilot",
+      "created_at": "2026-04-18T04:42:14Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/SQL/Packer.manifest",
+      "line": 101,
+      "body": "`update_db_ignition_RequireDrawingGroup.sql` is listed in the SQL packer manifest, but that file does not exist under `Core/SQL/` in this branch. This will break packaging/builds that consume `Core/SQL/Packer.manifest`. Either add the missing script (with the correct name/location) or remove the entry, and make the change in `Core/SQL/Packer.targets` (the manifest is generated) before regenerating.\n```suggestion\n\n```",
+      "author": "Copilot",
+      "created_at": "2026-04-18T04:42:15Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/SQL/Packer.manifest",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "patch": "@@ -98,6 +98,7 @@ update_db_ignition_10.174.sql\n update_db_ignition_10.175.sql\n update_db_ignition_10.176.sql\n update_db_ignition_10.177.sql\n+update_db_ignition_RequireDrawingGroup.sql\n update_db_ignition_template.sql\n update_db_scheduler_1.01.sql\n update_db_template.sql"
+    },
+    {
+      "filename": "Core/SQL/base_procs.sql",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "patch": "@@ -58945,7 +58945,7 @@ CREATE PROCEDURE dbo.s_enc_get_DistributionLists_for_sync\n AS\n   SELECT *\n     FROM DistributionLists\n-   WHERE ((ProjectID IS NULL AND @ProjectID = 0) OR (ProjectID = @ProjectID))\n+   WHERE (ProjectID IS NULL OR ProjectID = @ProjectID)\n      AND (@LastSyncDateTime IS NULL OR LastModified > @LastSyncDateTime)\n GO\n "
+    },
+    {
+      "filename": "Core/SQL/delta_procs.sql",
+      "status": "modified",
+      "additions": 9,
+      "deletions": 0,
+      "patch": "@@ -38,6 +38,15 @@ SET ANSI_NULLS, ANSI_PADDING, ANSI_WARNINGS, ARITHABORT, CONCAT_NULL_YIELDS_NULL\n SET NUMERIC_ROUNDABORT OFF;\n GO\n \n+ALTER PROCEDURE dbo.s_enc_get_DistributionLists_for_sync\n+  @ProjectID        int,\n+  @LastSyncDateTime datetimeoffset\n+AS\n+  SELECT *\n+    FROM DistributionLists\n+   WHERE (ProjectID IS NULL OR ProjectID = @ProjectID)\n+     AND (@LastSyncDateTime IS NULL OR LastModified > @LastSyncDateTime)\n+GO\n \n UPDATE versions set major = 10, minor = 177, revision = 0, LastModified = SYSDATETIMEOFFSET() where program_id = 'Procs'\n GO"
+    },
+    {
+      "filename": "Core/SQL/record_procs_hash.sql",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "patch": "@@ -1,4 +1,4 @@\n-﻿UPDATE versions SET md5 = '5199FFF9105049716E1C2D60A74DEC51' WHERE program_id = 'Procs';\n+﻿UPDATE versions SET md5 = '3A5F6CDD8AAA13745D7E5056AE19ED1B' WHERE program_id = 'Procs';\n UPDATE versions SET md5 = '91045964B072D39976579569F271C264' WHERE program_id = 'Previous';\n \n WITH Hashs AS (SELECT * FROM (VALUES (10, 166, 'E9B3DD7296EC5241327664C04824B586'),"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/Packer.manifest",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "patch": "@@ -18,7 +18,7 @@ bin\\Google.Apis.Core.dll\n bin\\Google.Apis.dll\n bin\\Google.Cloud.Vision.V1.dll\n bin\\Google.LongRunning.dll\n-bin\\Google.Protobuf.dll\n+bin\\Google.OrTools.dll\n bin\\Grpc.Auth.dll\n bin\\Grpc.Core.Api.dll\n bin\\Grpc.Core.dll"
+    }
+  ],
+  "diff": "diff --git a/Core/SQL/Packer.manifest b/Core/SQL/Packer.manifest\nindex c0f5d23c0c9..c11a2e23525 100644\n--- a/Core/SQL/Packer.manifest\n+++ b/Core/SQL/Packer.manifest\n@@ -98,6 +98,7 @@ update_db_ignition_10.174.sql\n update_db_ignition_10.175.sql\n update_db_ignition_10.176.sql\n update_db_ignition_10.177.sql\n+update_db_ignition_RequireDrawingGroup.sql\n update_db_ignition_template.sql\n update_db_scheduler_1.01.sql\n update_db_template.sql\ndiff --git a/Core/SQL/base_procs.sql b/Core/SQL/base_procs.sql\nindex ddaf6c17899..a978cdc6b0a 100644\n--- a/Core/SQL/base_procs.sql\n+++ b/Core/SQL/base_procs.sql\n@@ -58945,7 +58945,7 @@ CREATE PROCEDURE dbo.s_enc_get_DistributionLists_for_sync\n AS\n   SELECT *\n     FROM DistributionLists\n-   WHERE ((ProjectID IS NULL AND @ProjectID = 0) OR (ProjectID = @ProjectID))\n+   WHERE (ProjectID IS NULL OR ProjectID = @ProjectID)\n      AND (@LastSyncDateTime IS NULL OR LastModified > @LastSyncDateTime)\n GO\n \ndiff --git a/Core/SQL/delta_procs.sql b/Core/SQL/delta_procs.sql\nindex beba778462c..159f507f152 100644\n--- a/Core/SQL/delta_procs.sql\n+++ b/Core/SQL/delta_procs.sql\n@@ -38,6 +38,15 @@ SET ANSI_NULLS, ANSI_PADDING, ANSI_WARNINGS, ARITHABORT, CONCAT_NULL_YIELDS_NULL\n SET NUMERIC_ROUNDABORT OFF;\n GO\n \n+ALTER PROCEDURE dbo.s_enc_get_DistributionLists_for_sync\n+  @ProjectID        int,\n+  @LastSyncDateTime datetimeoffset\n+AS\n+  SELECT *\n+    FROM DistributionLists\n+   WHERE (ProjectID IS NULL OR ProjectID = @ProjectID)\n+     AND (@LastSyncDateTime IS NULL OR LastModified > @LastSyncDateTime)\n+GO\n \n UPDATE versions set major = 10, minor = 177, revision = 0, LastModified = SYSDATETIMEOFFSET() where program_id = 'Procs'\n GO\ndiff --git a/Core/SQL/record_procs_hash.sql b/Core/SQL/record_procs_hash.sql\nindex 93d049d15f6..259c664cdf2 100644\n--- a/Core/SQL/record_procs_hash.sql\n+++ b/Core/SQL/record_procs_hash.sql\n@@ -1,4 +1,4 @@\n-﻿UPDATE versions SET md5 = '5199FFF9105049716E1C2D60A74DEC51' WHERE program_id = 'Procs';\n+﻿UPDATE versions SET md5 = '3A5F6CDD8AAA13745D7E5056AE19ED1B' WHERE program_id = 'Procs';\n UPDATE versions SET md5 = '91045964B072D39976579569F271C264' WHERE program_id = 'Previous';\n \n WITH Hashs AS (SELECT * FROM (VALUES (10, 166, 'E9B3DD7296EC5241327664C04824B586'),\ndiff --git a/Core/Web Layer/WebUI/Packer.manifest b/Core/Web Layer/WebUI/Packer.manifest\nindex 515044dd8a2..4ff0ca45e32 100644\n--- a/Core/Web Layer/WebUI/Packer.manifest\t\n+++ b/Core/Web Layer/WebUI/Packer.manifest\t\n@@ -18,7 +18,7 @@ bin\\Google.Apis.Core.dll\n bin\\Google.Apis.dll\n bin\\Google.Cloud.Vision.V1.dll\n bin\\Google.LongRunning.dll\n-bin\\Google.Protobuf.dll\n+bin\\Google.OrTools.dll\n bin\\Grpc.Auth.dll\n bin\\Grpc.Core.Api.dll\n bin\\Grpc.Core.dll\n"
+}

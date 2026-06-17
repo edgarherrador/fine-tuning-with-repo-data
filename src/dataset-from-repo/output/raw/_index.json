@@ -1,0 +1,242 @@
+[
+  {
+    "number": 11063,
+    "title": "PS-69892: Token exchange",
+    "cached": false
+  },
+  {
+    "number": 11019,
+    "title": "PS-69533: Angular unit test for drawing-version-panel component",
+    "cached": false
+  },
+  {
+    "number": 11062,
+    "title": "[PS-67188] Fully restricted user from entering edit mode on drawing annotation labels",
+    "cached": false
+  },
+  {
+    "number": 10978,
+    "title": "[PS-69532] Moved DrawingFDEF POM to inherit from FDEFBase",
+    "cached": false
+  },
+  {
+    "number": 10284,
+    "title": "Lucretia/tile and list view to angular",
+    "cached": false
+  },
+  {
+    "number": 11055,
+    "title": "PS-70018 POM updates for Drawing detail overlay. Validating UDF field and empty Sharing Log.",
+    "cached": false
+  },
+  {
+    "number": 11024,
+    "title": "Wip/adam/ps 69090",
+    "cached": false
+  },
+  {
+    "number": 11060,
+    "title": "PS-69899 Checking WorkflowStatePermission limited to normal workflow only. Workflow Templates do not require the check.",
+    "cached": false
+  },
+  {
+    "number": 11056,
+    "title": "Fix PS66980:",
+    "cached": false
+  },
+  {
+    "number": 11043,
+    "title": "PS-69535: added missing layer panel filter removal button to converted drawing page",
+    "cached": false
+  },
+  {
+    "number": 11031,
+    "title": "PS-69534: index panel angular tests and bug fix",
+    "cached": false
+  },
+  {
+    "number": 11037,
+    "title": "Fix PS-69966: The Pay App is not pulling the revenue amount from a PCCO into the SOV line item",
+    "cached": false
+  },
+  {
+    "number": 11009,
+    "title": "PS-69448: Add targeted diagnostic logs for ad hoc report email pipeline",
+    "cached": false
+  },
+  {
+    "number": 11029,
+    "title": "PS-69528: fixed all punch-item related bugs and issues",
+    "cached": false
+  },
+  {
+    "number": 10940,
+    "title": "Lucretia/angular js reporting wizard",
+    "cached": false
+  },
+  {
+    "number": 11030,
+    "title": "Fix for application for payment ",
+    "cached": false
+  },
+  {
+    "number": 11014,
+    "title": "PS-69955: Reduce application to SQL Server calls of SYSUTCDATETIME()",
+    "cached": false
+  },
+  {
+    "number": 11013,
+    "title": "PS-65543: Staging site capture changes for post-freeze",
+    "cached": false
+  },
+  {
+    "number": 10967,
+    "title": "PS-69738: Allow the permission grid fill the area in View Settings",
+    "cached": false
+  },
+  {
+    "number": 10894,
+    "title": "PS-69003 PotentialChangeValue will be updated when a SCO linked to a contract is deleted and the PCO items was already linked to the contract.",
+    "cached": false
+  },
+  {
+    "number": 10738,
+    "title": "Zen/photo mgmt",
+    "cached": false
+  },
+  {
+    "number": 10936,
+    "title": "Secure Token Exchange for Agentic Platform Integration — Development Plan",
+    "cached": false
+  },
+  {
+    "number": 10845,
+    "title": "Sigma6/rename reports",
+    "cached": false
+  },
+  {
+    "number": 10862,
+    "title": "docs: add error message assertion rules to integration test conventions",
+    "cached": false
+  },
+  {
+    "number": 10913,
+    "title": "Migrate checklist template list-page Angular/C# changes from ps-66855 into ps-66540",
+    "cached": false
+  },
+  {
+    "number": 10840,
+    "title": "PS-68982 The GroupId when updated for the user should update in PermissionProject table for the same user.",
+    "cached": false
+  },
+  {
+    "number": 10816,
+    "title": "Ps 68698   more agressive speed ups",
+    "cached": false
+  },
+  {
+    "number": 8534,
+    "title": "PS-60327 - Add Region (called Data_Center) to GainSight global context",
+    "cached": false
+  },
+  {
+    "number": 10876,
+    "title": "PS-69087 Phase 5: drawing rotation, quick-load PDF, PDF text extraction tests",
+    "cached": false
+  },
+  {
+    "number": 10875,
+    "title": "PS-69087 Phase 10: harden uploader pipeline FileShare assertions",
+    "cached": false
+  },
+  {
+    "number": 10874,
+    "title": "PS-69087 Phase 4: ExternalFileSystem fetch + download-to-FMS coverage",
+    "cached": false
+  },
+  {
+    "number": 10871,
+    "title": "PS-69087 Phase 3: SiteCapture BL FileShare integration tests",
+    "cached": false
+  },
+  {
+    "number": 10870,
+    "title": "PS-69087 Phase 7: project export, Excel error list, ResourceFile coverage",
+    "cached": false
+  },
+  {
+    "number": 10869,
+    "title": "PS-69087 Phase 6: org provisioning FileShare test coverage",
+    "cached": false
+  },
+  {
+    "number": 10868,
+    "title": "PS-69087 Phase 9: harden Both-method FileShare coverage",
+    "cached": false
+  },
+  {
+    "number": 10861,
+    "title": "PS-68718: Fix APIM URL format for no-context-ID help links",
+    "cached": false
+  },
+  {
+    "number": 10797,
+    "title": "PS-68864 - Sync Site Capture Upload Requests status back to mobile",
+    "cached": false
+  },
+  {
+    "number": 10581,
+    "title": "PS-66826 - Portfolio level Distribution Lists are not synced",
+    "cached": false
+  },
+  {
+    "number": 10375,
+    "title": "Wip/chrisc/ps 66855 upgrade checklist template page",
+    "cached": false
+  },
+  {
+    "number": 10479,
+    "title": "Fix 90°/270° rotation in TransformToPdfPoint: restore correct cross-d…",
+    "cached": false
+  },
+  {
+    "number": 10402,
+    "title": "frontend",
+    "cached": false
+  },
+  {
+    "number": 10203,
+    "title": "PS-66772: Solved issue Custom View - User-added field for the custom List view is not saved.",
+    "cached": false
+  },
+  {
+    "number": 7489,
+    "title": "Implement Unit test framework Karma-Jasmine",
+    "cached": false
+  },
+  {
+    "number": 8751,
+    "title": "trajectory annotation spike for UI",
+    "cached": false
+  },
+  {
+    "number": 8371,
+    "title": "PS-59856 Add switching menus handle with Observables that can be canc…",
+    "cached": false
+  },
+  {
+    "number": 9209,
+    "title": "WIP - Cross-record search",
+    "cached": false
+  },
+  {
+    "number": 7136,
+    "title": "PS-55932: parsing string to date with user culture instead of default US culture",
+    "cached": false
+  },
+  {
+    "number": 854,
+    "title": "parked/better changes struct for sync",
+    "cached": false
+  }
+]

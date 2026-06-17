@@ -1,0 +1,63 @@
+{
+  "number": 7136,
+  "title": "PS-55932: parsing string to date with user culture instead of default US culture",
+  "body": "",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "abarati",
+  "created_at": "2025-01-29T02:05:30Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "01f32a372bdfc779ffd689ce9d3be1681b37590c",
+  "head_branch": "wip/Arash/PS-55932-cuture",
+  "head_sha": "018a8a4d2e0193c3e2e28d4fccf542f02bf7e9a3",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "kcostenbader",
+      "submitted_at": "2025-05-01T15:03:04Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Business Layer/DataAccess/Drawings/TitleBlockPDFDocumentScanner.cs",
+      "line": 244,
+      "body": "Should be using the user's region, but this would only work in the translations branch",
+      "author": "kcostenbader",
+      "created_at": "2025-05-01T15:02:52Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [
+    {
+      "body": "Hi Karl,\r\nI sent you an email regarding this PR for your feedback.\r\nThanks",
+      "author": "abarati",
+      "created_at": "2025-01-29T02:12:23Z"
+    }
+  ],
+  "files": [
+    {
+      "filename": "Common/Common/SystemFramework/Global.cs",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 2,
+      "patch": "@@ -1716,7 +1716,7 @@ public static bool IsDate(object value)\n         /// This method replicates the Microsoft.VisualBasic method of the same name\n         /// </summary>\n         /// <param name=\"expression\"></param>\n-        public static bool IsDate(object expression, out DateTimeOffset convertedDate, bool falseIfMinValue = false)\n+        public static bool IsDate(object expression, out DateTimeOffset convertedDate, bool falseIfMinValue = false, string language= \"\")\n         {\n             // Exceptions are handled by the caller\n \n@@ -1749,8 +1749,11 @@ public static bool IsDate(object expression, out DateTimeOffset convertedDate, b\n                 {\n                     if (expression is string sExpression)\n                     {\n+                        // check if any specific culture is passed\n+                        var culture = string.IsNullOrEmpty(language) ? Thread.CurrentThread.CurrentCulture : new CultureInfo(language);\n+\n                         // DateTimeStyles.NoCurrentDateDefault not allowed for DateTimeOffset\n-                        returnValue = DateTimeOffset.TryParse(sExpression, Thread.CurrentThread.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeUniversal, out convertedDate);\n+                        returnValue = DateTimeOffset.TryParse(sExpression, culture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeUniversal, out convertedDate);\n                     }\n                 }\n             }"
+    },
+    {
+      "filename": "Core/Business Layer/DataAccess/Drawings/TitleBlockPDFDocumentScanner.cs",
+      "status": "modified",
+      "additions": 24,
+      "deletions": 1,
+      "patch": "@@ -240,12 +240,35 @@ private void SetRecognizedContentToFieldRevisionDate(IUser user, TitleBlockPDFDo\n         {\n             // Exceptions are handled by the caller\n \n-            if (Global.IsDate(content?.Trim(), out var value, true))\n+            // get the culture for the organization\n+            var culture = GetOrganizationCulture((Support.LanguageTypes)user.CurrentPortfolio.LanguageID);\n+\n+            // use org culture to extract date from string\n+            if (Global.IsDate(content?.Trim(), out var value, true, culture))\n             {\n                 scanResult.RevisionDate = user.DateFromUser(value, default);\n             }\n         }\n \n+        /// <summary>\n+        /// Get the culture for the organization\n+        /// </summary>\n+        /// <param name=\"languageId\"></param>\n+        /// <returns></returns>\n+        private string GetOrganizationCulture(Support.LanguageTypes languageId)\n+        {\n+            // Exceptions are handled by the caller\n+\n+            switch (languageId)\n+            {\n+                case Support.LanguageTypes.Dutch:\n+                    return \"nl-NL\";\n+\n+                default:\n+                    return \"en-US\";\n+            }\n+        }\n+\n         /// <summary>\n         /// Set up a proper value for Discipline field\n         /// </summary>"
+    }
+  ],
+  "diff": "diff --git a/Common/Common/SystemFramework/Global.cs b/Common/Common/SystemFramework/Global.cs\nindex b18ec888051..d3b44fbbc4f 100644\n--- a/Common/Common/SystemFramework/Global.cs\n+++ b/Common/Common/SystemFramework/Global.cs\n@@ -1716,7 +1716,7 @@ public static bool IsDate(object value)\n         /// This method replicates the Microsoft.VisualBasic method of the same name\n         /// </summary>\n         /// <param name=\"expression\"></param>\n-        public static bool IsDate(object expression, out DateTimeOffset convertedDate, bool falseIfMinValue = false)\n+        public static bool IsDate(object expression, out DateTimeOffset convertedDate, bool falseIfMinValue = false, string language= \"\")\n         {\n             // Exceptions are handled by the caller\n \n@@ -1749,8 +1749,11 @@ public static bool IsDate(object expression, out DateTimeOffset convertedDate, b\n                 {\n                     if (expression is string sExpression)\n                     {\n+                        // check if any specific culture is passed\n+                        var culture = string.IsNullOrEmpty(language) ? Thread.CurrentThread.CurrentCulture : new CultureInfo(language);\n+\n                         // DateTimeStyles.NoCurrentDateDefault not allowed for DateTimeOffset\n-                        returnValue = DateTimeOffset.TryParse(sExpression, Thread.CurrentThread.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeUniversal, out convertedDate);\n+                        returnValue = DateTimeOffset.TryParse(sExpression, culture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeUniversal, out convertedDate);\n                     }\n                 }\n             }\ndiff --git a/Core/Business Layer/DataAccess/Drawings/TitleBlockPDFDocumentScanner.cs b/Core/Business Layer/DataAccess/Drawings/TitleBlockPDFDocumentScanner.cs\nindex 95c5cc1ab30..cf05aa20040 100644\n--- a/Core/Business Layer/DataAccess/Drawings/TitleBlockPDFDocumentScanner.cs\t\n+++ b/Core/Business Layer/DataAccess/Drawings/TitleBlockPDFDocumentScanner.cs\t\n@@ -240,12 +240,35 @@ private void SetRecognizedContentToFieldRevisionDate(IUser user, TitleBlockPDFDo\n         {\n             // Exceptions are handled by the caller\n \n-            if (Global.IsDate(content?.Trim(), out var value, true))\n+            // get the culture for the organization\n+            var culture = GetOrganizationCulture((Support.LanguageTypes)user.CurrentPortfolio.LanguageID);\n+\n+            // use org culture to extract date from string\n+            if (Global.IsDate(content?.Trim(), out var value, true, culture))\n             {\n                 scanResult.RevisionDate = user.DateFromUser(value, default);\n             }\n         }\n \n+        /// <summary>\n+        /// Get the culture for the organization\n+        /// </summary>\n+        /// <param name=\"languageId\"></param>\n+        /// <returns></returns>\n+        private string GetOrganizationCulture(Support.LanguageTypes languageId)\n+        {\n+            // Exceptions are handled by the caller\n+\n+            switch (languageId)\n+            {\n+                case Support.LanguageTypes.Dutch:\n+                    return \"nl-NL\";\n+\n+                default:\n+                    return \"en-US\";\n+            }\n+        }\n+\n         /// <summary>\n         /// Set up a proper value for Discipline field\n         /// </summary>\n"
+}

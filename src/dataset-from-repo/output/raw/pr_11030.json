@@ -1,0 +1,50 @@
+{
+  "number": 11030,
+  "title": "Fix for application for payment ",
+  "body": "Non-consolidated implementation is incorrect and needs to be updated  to use RevenueAmount instead of BdgtAppliedAmount\r\n\r\nNot sure if hotfix will be required",
+  "state": "open",
+  "draft": true,
+  "labels": [],
+  "author": "Anthony-Angulo-Code",
+  "created_at": "2026-06-11T23:48:04Z",
+  "merged_at": null,
+  "base_branch": "hotfix/2026.09.1",
+  "base_sha": "21f69982fe815976db05a54dca9e15296a5a5e59",
+  "head_branch": "wip/anthony/PS-69966",
+  "head_sha": "682baa55e847368705e48ca41d404d3e64585f4d",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nUpdates the stored procedure used to fetch Prime Contract Change Orders for Applications for Payment (AFP) so the non-consolidated path uses `PotentialCO.RevenueAmount` (instead of `BdgtAppliedAmount`) for scheduled value and unit price.\n\n**Changes:**\n- Update `dbo.s_enc_Find_PCCOs_For_AFPs` to return `RevenueAmount` for `ScheduledValue` / `UnitPrice`.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-11T23:50:39Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/SQL/base_procs.sql",
+      "line": 55395,
+      "body": "`base_procs.sql` was modified, but the corresponding generated `Core/SQL/delta_procs.sql` update is not included. Per `docs/ai/BACKEND_CONVENTIONS.md:92`, `delta_procs.sql` is the generated diff used for DB upgrades; without regenerating/committing it, existing environments may not receive this stored proc change.",
+      "author": "Copilot",
+      "created_at": "2026-06-11T23:50:38Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/SQL/base_procs.sql",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 2,
+      "patch": "@@ -55391,8 +55391,8 @@ AS\n          pcco.PCCONumber ,\n          pcco.ChangeOrderID ,\n          p.PCONumber ,\n-         p.BdgtAppliedAmount AS ScheduledValue ,\n-         p.BdgtAppliedAmount AS UnitPrice ,\n+         p.RevenueAmount AS ScheduledValue ,\n+         p.RevenueAmount AS UnitPrice ,\n          1 AS ScheduledQty ,\n          p.PCOID\n            /* No need to use list_PrimeContractCO here since we aren't applying security or extracting other information */"
+    }
+  ],
+  "diff": "diff --git a/Core/SQL/base_procs.sql b/Core/SQL/base_procs.sql\nindex 7d626a1490..96ed5e3057 100644\n--- a/Core/SQL/base_procs.sql\n+++ b/Core/SQL/base_procs.sql\n@@ -55391,8 +55391,8 @@ AS\n          pcco.PCCONumber ,\n          pcco.ChangeOrderID ,\n          p.PCONumber ,\n-         p.BdgtAppliedAmount AS ScheduledValue ,\n-         p.BdgtAppliedAmount AS UnitPrice ,\n+         p.RevenueAmount AS ScheduledValue ,\n+         p.RevenueAmount AS UnitPrice ,\n          1 AS ScheduledQty ,\n          p.PCOID\n            /* No need to use list_PrimeContractCO here since we aren't applying security or extracting other information */\n"
+}

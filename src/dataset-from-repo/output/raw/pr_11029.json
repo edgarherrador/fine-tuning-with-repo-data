@@ -1,0 +1,73 @@
+{
+  "number": 11029,
+  "title": "PS-69528: fixed all punch-item related bugs and issues",
+  "body": "PS-69528: fixed all punch-item related bugs and issues",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "abarati",
+  "created_at": "2026-06-11T23:26:40Z",
+  "merged_at": null,
+  "base_branch": "sigma6/DrawingConversion",
+  "base_sha": "6806b36cfdf2d8f2707282735c1082290a63d138",
+  "head_branch": "wip/Arash/PS-69528-punch-issues",
+  "head_sha": "fe9018b7fa640f39b8cee34629193c2b9c94a7e3",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "sevilbk-trimble",
+      "submitted_at": "2026-06-12T15:43:24Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-annotation-edit.service.ts",
+      "line": 762,
+      "body": "Is this comment outdated in the _quickLinkCreated path? Seems to be written when showDialog was called synchronously.",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-06-12T15:32:49Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-annotation-edit.service.ts",
+      "line": 774,
+      "body": "200 is a magic number. Can we extract it into a named constant like QUICKLINK_POPUP_DELAY_MS?",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-06-12T15:35:00Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts",
+      "line": 813,
+      "body": "I couldn't find a matching removeEventListener in the cleanup path (unlike the annotationManager listeners). It seems to be safe, but worth noting.",
+      "author": "sevilbk-trimble",
+      "created_at": "2026-06-12T15:43:06Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-annotation-edit.service.ts",
+      "status": "modified",
+      "additions": 26,
+      "deletions": 23,
+      "patch": "@@ -750,19 +750,31 @@ export class DrawingAnnotationEditService extends BaseService {\n             return;\n         }\n \n-        // Normal path: open add-link popup\n-        // Prefer position-only mode (target=null, position=X) so the popup uses window-relative\n-        // my/at/of:window coordinates. Fall back to anchoring on the edit dialog element when\n-        // position is null (e.g. getDialogPositions unavailable) — the element is still live at\n-        // this call site; it is destroyed only by the isAnnotationEditDialogVisible.set(false) below.\n-        this._addLinkPopupService.showDialogForAnnotation(\n-            annotation.PanelLinkID,\n-            position ? null : this._editDialogElement,\n-            position,\n-            (link: any) => this.addLinkToAnnotation(link),\n-            this._selectedQuickLink.linkType,\n-            this._selectedQuickLink.tableTypeId\n-        );\n+        // Capture quick-link values now so the closure sees the values at click time,\n+        // not the potentially-mutated values 200ms later.\n+        const linkType = this._selectedQuickLink.linkType;\n+        const tableTypeId = this._selectedQuickLink.tableTypeId;\n+        const showDialog = () => {\n+            // Normal path: open add-link popup\n+            // Prefer position-only mode (target=null, position=X) so the popup uses window-relative\n+            // my/at/of:window coordinates. Fall back to anchoring on the edit dialog element when\n+            // position is null (e.g. getDialogPositions unavailable) — the element is still live at\n+            // this call site; it is destroyed only by the isAnnotationEditDialogVisible.set(false) below.\n+            this._addLinkPopupService.showDialogForAnnotation(\n+                annotation.PanelLinkID,\n+                position ? null : this._editDialogElement,\n+                position,\n+                (link: any) => this.addLinkToAnnotation(link),\n+                linkType,\n+                tableTypeId\n+            );\n+        };\n+        if (this._quickLinkCreated) {\n+            // workaround for long standing bug, sometimes the popup detects the annotation click and close immediately after opening\n+            setTimeout(showDialog, 200);\n+        } else {\n+            showDialog();\n+        }\n \n         // Close the annotation edit popup immediately (legacy dispatches close event after showing link popup)\n         this.isAnnotationEditDialogVisible.set(false);\n@@ -1478,21 +1490,12 @@ export class DrawingAnnotationEditService extends BaseService {\n             return;\n         }\n \n-        // Punch annotation workaround (C2): force deselect/reselect\n-        if (this.isPunchAnnotation(annotation) && !annotation.imported) {\n-            this._annotationManager?.deselectAnnotation?.(annotation as any);\n-            setTimeout(() => {\n-                this._annotationManager?.selectAnnotation?.(annotation as any);\n-            }, 0);\n-            return;\n-        }\n-\n         // AP11: Quick-link path — skip edit popup, go directly to add-link popup\n         if (this._quickLinkCreated) {\n-            this._quickLinkCreated = false;\n             this.selectedAnnotation.set(annotation);\n             this.updatePopupPositionInfo(annotation);\n             this.onLinkButtonClicked();\n+            this._quickLinkCreated = false;\n             this._selectedQuickLink.linkType = null;\n             this._selectedQuickLink.tableTypeId = null;\n             return;"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts",
+      "status": "modified",
+      "additions": 9,
+      "deletions": 0,
+      "patch": "@@ -808,6 +808,15 @@ export class DrawingViewerService extends BaseService implements IDrawingModule\n             }\n         });\n \n+        const rectangleTool = documentViewer.getTool(ApryseToolNames.Rectangle) as Core.Tools.RectangleCreateTool | undefined;\n+        if (rectangleTool) {\n+            rectangleTool.addEventListener(\"annotationCreated\", (annotation: DrawingAnnotation) => {\n+                if (this.activeMarkup() === \"link.punchlist\") {\n+                    annotation.markAsPunchAnnotation?.();\n+                }\n+            });\n+        }\n+\n         // VI5 — Hide toolbox when any Apryse native panel opens (style, notes/comments, search)\n         const nativePanels = Object.values(ApryseNativePanels);\n         instance.UI.addEventListener?.(\"visibilityChanged\", (e: any) => {"
+    }
+  ],
+  "diff": "diff --git a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-annotation-edit.service.ts b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-annotation-edit.service.ts\nindex 111ad0eac0..50d0c0de90 100644\n--- a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-annotation-edit.service.ts\t\n+++ b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-annotation-edit.service.ts\t\n@@ -750,19 +750,31 @@ export class DrawingAnnotationEditService extends BaseService {\n             return;\n         }\n \n-        // Normal path: open add-link popup\n-        // Prefer position-only mode (target=null, position=X) so the popup uses window-relative\n-        // my/at/of:window coordinates. Fall back to anchoring on the edit dialog element when\n-        // position is null (e.g. getDialogPositions unavailable) — the element is still live at\n-        // this call site; it is destroyed only by the isAnnotationEditDialogVisible.set(false) below.\n-        this._addLinkPopupService.showDialogForAnnotation(\n-            annotation.PanelLinkID,\n-            position ? null : this._editDialogElement,\n-            position,\n-            (link: any) => this.addLinkToAnnotation(link),\n-            this._selectedQuickLink.linkType,\n-            this._selectedQuickLink.tableTypeId\n-        );\n+        // Capture quick-link values now so the closure sees the values at click time,\n+        // not the potentially-mutated values 200ms later.\n+        const linkType = this._selectedQuickLink.linkType;\n+        const tableTypeId = this._selectedQuickLink.tableTypeId;\n+        const showDialog = () => {\n+            // Normal path: open add-link popup\n+            // Prefer position-only mode (target=null, position=X) so the popup uses window-relative\n+            // my/at/of:window coordinates. Fall back to anchoring on the edit dialog element when\n+            // position is null (e.g. getDialogPositions unavailable) — the element is still live at\n+            // this call site; it is destroyed only by the isAnnotationEditDialogVisible.set(false) below.\n+            this._addLinkPopupService.showDialogForAnnotation(\n+                annotation.PanelLinkID,\n+                position ? null : this._editDialogElement,\n+                position,\n+                (link: any) => this.addLinkToAnnotation(link),\n+                linkType,\n+                tableTypeId\n+            );\n+        };\n+        if (this._quickLinkCreated) {\n+            // workaround for long standing bug, sometimes the popup detects the annotation click and close immediately after opening\n+            setTimeout(showDialog, 200);\n+        } else {\n+            showDialog();\n+        }\n \n         // Close the annotation edit popup immediately (legacy dispatches close event after showing link popup)\n         this.isAnnotationEditDialogVisible.set(false);\n@@ -1478,21 +1490,12 @@ export class DrawingAnnotationEditService extends BaseService {\n             return;\n         }\n \n-        // Punch annotation workaround (C2): force deselect/reselect\n-        if (this.isPunchAnnotation(annotation) && !annotation.imported) {\n-            this._annotationManager?.deselectAnnotation?.(annotation as any);\n-            setTimeout(() => {\n-                this._annotationManager?.selectAnnotation?.(annotation as any);\n-            }, 0);\n-            return;\n-        }\n-\n         // AP11: Quick-link path — skip edit popup, go directly to add-link popup\n         if (this._quickLinkCreated) {\n-            this._quickLinkCreated = false;\n             this.selectedAnnotation.set(annotation);\n             this.updatePopupPositionInfo(annotation);\n             this.onLinkButtonClicked();\n+            this._quickLinkCreated = false;\n             this._selectedQuickLink.linkType = null;\n             this._selectedQuickLink.tableTypeId = null;\n             return;\ndiff --git a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts\nindex 7841daa638..73c2c97f8c 100644\n--- a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts\t\n+++ b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts\t\n@@ -808,6 +808,15 @@ export class DrawingViewerService extends BaseService implements IDrawingModule\n             }\n         });\n \n+        const rectangleTool = documentViewer.getTool(ApryseToolNames.Rectangle) as Core.Tools.RectangleCreateTool | undefined;\n+        if (rectangleTool) {\n+            rectangleTool.addEventListener(\"annotationCreated\", (annotation: DrawingAnnotation) => {\n+                if (this.activeMarkup() === \"link.punchlist\") {\n+                    annotation.markAsPunchAnnotation?.();\n+                }\n+            });\n+        }\n+\n         // VI5 — Hide toolbox when any Apryse native panel opens (style, notes/comments, search)\n         const nativePanels = Object.values(ApryseNativePanels);\n         instance.UI.addEventListener?.(\"visibilityChanged\", (e: any) => {\n"
+}

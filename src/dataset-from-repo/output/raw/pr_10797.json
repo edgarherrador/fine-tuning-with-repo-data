@@ -1,0 +1,319 @@
+{
+  "number": 10797,
+  "title": "PS-68864 - Sync Site Capture Upload Requests status back to mobile",
+  "body": "PS-68864 - Sync Site Capture Upload Requests status back to mobile\r\n\r\nThis pull request introduces a new API endpoint and supporting infrastructure to allow mobile clients to retrieve the processing/upload status of Site Capture uploads, and updates mobile capabilities to reflect this new functionality. It also removes legacy or deprecated capabilities and cleans up related packaging and manifest files.\r\n\r\n**Site Capture Upload Status API and Data Model:**\r\n\r\n- Added a new API endpoint `SiteCaptureProcessingState` to `SyncController` in `ProjectSight.WebAPI` for retrieving Site Capture processing/upload states for a given portfolio and project. This endpoint is intended for use by mobile clients version 2.45.2 and newer.\r\n- Implemented the method `GetUploadProcessingStates` in `SiteCaptureUploadRequestSystem` to fetch upload statuses from the database, mapping database status codes to a new `MobileSiteCaptureState` model. [[1]](diffhunk://#diff-642973ff8302f3fcb265e7509a387993f6fd99aa011532933265947f15ea7002R170-R234) [[2]](diffhunk://#diff-d58278c555baec18bd6dfc26792785e89b11abc1634a2d6d6f4d67c6aa163edbR1-R25)\r\n- Added a new SQL stored procedure `s_enc_get_SiteCaptureProcessingStates` to return Site Capture upload records (from both active and archive tables) filtered by portfolio, project, and last sync time.\r\n\r\n**Mobile Capability Updates:**\r\n\r\n- Introduced a new capability `SyncUploadStatus` in `MobileCapability`, and removed/commented out several legacy capabilities (`WorkflowTemplates`, `Support360`, `Announce360`, `SiteCapture`, `Names50`) that are now assumed to be supported everywhere or deprecated.\r\n- Updated `MobileSyncPrep` to advertise the new `SyncUploadStatus` capability to mobile clients instead of the removed legacy capabilities.\r\n- Simplified logic in `SyncSystem` so that `WorkflowTemplates` is no longer marked as unsupported, reflecting the assumption that all servers now support templates.\r\n\r\n**Packaging and Manifest Cleanup:**\r\n\r\n- Removed `ProjectSight.WebAPI` and its related files from the `Packer.manifest`, reflecting that these files are no longer required in the deployment package for `ServicesAPI`. [[1]](diffhunk://#diff-1f4b56eb0421be330f3b0cc5742a3db392f9c4c50c8338579ba7fed479b422ecL5-L13) [[2]](diffhunk://#diff-1f4b56eb0421be330f3b0cc5742a3db392f9c4c50c8338579ba7fed479b422ecL78) [[3]](diffhunk://#diff-1f4b56eb0421be330f3b0cc5742a3db392f9c4c50c8338579ba7fed479b422ecL110-L114)\r\n- Cleaned up the `StartServices.ps1` manifest by removing a reference to `Overrides\\MobileService-Web.config`.",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "rroesler",
+  "created_at": "2026-05-13T20:04:26Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "1130ba81b3e999cc3793ab1318942d339401c90d",
+  "head_branch": "wip/Sync-Upload-State",
+  "head_sha": "6e8f581c9a13f42dd7efdbc144aec320894b6dbb",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 1,
+  "approvers": [
+    "kcostenbader"
+  ],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nAdds a new mobile-facing API endpoint that returns Site Capture upload/processing states so that mobile clients (v2.45.2+) can sync upload progress back from the server. Also refreshes the `MobileCapability` enum (introducing `SyncUploadStatus`, retiring several legacy flags) and removes `ProjectSight.WebAPI` artifacts from the `ServicesAPI` packaging manifest.\n\n**Changes:**\n- New `SiteCaptureProcessingState` GET endpoint plus `SiteCaptureUploadRequestSystem.GetUploadProcessingStates`, backed by a new `s_enc_get_SiteCaptureProcessingStates` stored procedure that unions active and archive upload-request tables, mapped through a new `MobileSiteCaptureState` DTO.\n- Mobile capability enum: adds `SyncUploadStatus` (and reserves `NextNumber`); removes/comments out `WorkflowTemplates`, `Support360`, `Announce360`, `SiteCapture`, `Names50`, and stops advertising the deprecated ones in `MobileSyncPrep`/`SyncSystem`.\n- Packaging cleanup: removes WebAPI binaries/configs from `ServicesAPI/Packer.manifest` and drops `Overrides\\MobileService-Web.config` from `Core/DeployScripts/Packer.manifest`.\n\n### Reviewed changes\n\nCopilot reviewed 9 out of 9 changed files in this pull request and generated 8 comments.\n\n<details>\n<summary>Show a summary per file</summary>\n\n| File | Description |\r\n| ---- | ----------- |\r\n| Core/SQL/base_procs_ignition.sql | New `s_enc_get_SiteCaptureProcessingStates` proc unioning active and archive tables. |\r\n| Core/Business Layer/DataAccess/SiteCapture/SiteCaptureUploadRequestSystem.cs | New `GetUploadProcessingStates` method that maps DB statuses to `MobileSiteCaptureState`. |\r\n| Core/Common/Components/Mobile/MobileSiteCaptureState.cs | New DTO + state enum returned to mobile. |\r\n| Core/Common/Components/Mobile/MobileCapability.cs | Adds `SyncUploadStatus` and `NextNumber`; comments out legacy capabilities. |\r\n| Core/Common/Components/Mobile/MobileSyncPrep.cs | Replaces removed legacy capability advertisements with `SyncUploadStatus`. |\r\n| Core/Business Layer/DataAccess/SyncSystem.cs | Stops marking `WorkflowTemplates` as not-supported. |\r\n| Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs | New `SiteCaptureProcessingState` GET endpoint. |\r\n| Core/API Layer/ProjectSight.ServicesAPI/Packer.manifest | Drops WebAPI binaries/configs from ServicesAPI package. |\r\n| Core/DeployScripts/Packer.manifest | Removes obsolete `MobileService-Web.config` override. |\n</details>\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-05-13T20:08:25Z"
+    },
+    {
+      "state": "DISMISSED",
+      "body": "",
+      "author": "kcostenbader",
+      "submitted_at": "2026-05-14T00:34:02Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-14T19:23:49Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-14T19:25:11Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-14T19:27:39Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-14T19:29:10Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-14T19:30:49Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-14T20:00:04Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "rroesler",
+      "submitted_at": "2026-05-14T20:00:18Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "copilot-swe-agent[bot]",
+      "submitted_at": "2026-05-14T20:02:28Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "copilot-swe-agent[bot]",
+      "submitted_at": "2026-05-14T20:02:32Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 9 out of 9 changed files in this pull request and generated no new comments.\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-05-14T20:03:32Z"
+    },
+    {
+      "state": "APPROVED",
+      "body": "",
+      "author": "kcostenbader",
+      "submitted_at": "2026-05-19T21:09:52Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Business Layer/DataAccess/SiteCapture/SiteCaptureUploadRequestSystem.cs",
+      "line": 13,
+      "body": "Two unused `using` directives were added to this file: `Google.Apis.Auth.OAuth2` and `System.Xml.Linq`. Neither namespace is referenced anywhere in the file (verified via search). These look like accidental IDE-suggested imports and should be removed to keep dependencies clean.",
+      "author": "Copilot",
+      "created_at": "2026-05-13T20:08:23Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs",
+      "line": 3444,
+      "body": "Several spelling/grammar issues in the new XML doc and inline comments here:\n- `Retrive` → `Retrieve`\n- `Statues` → `Statuses`\n- The doc comment ends mid-phrase (\"Site Capture Processing / Upload States/Statues\") and the `<param>`/`<returns>` tags are empty. Consider filling them in to match the style used by other endpoints in this controller.",
+      "author": "Copilot",
+      "created_at": "2026-05-13T20:08:23Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs",
+      "line": 3452,
+      "body": "Other endpoints on this controller (e.g. `CompleteMayaUpload` directly above) accept a `CancellationToken cancellationToken` parameter and forward it to `ConfigureAccessForPortfolioDBUserAsync`. This new endpoint instead passes `cancellationToken: default`, which means client disconnects/cancellations cannot propagate. Consider accepting a `CancellationToken` parameter and passing it through to be consistent with the surrounding code.",
+      "author": "Copilot",
+      "created_at": "2026-05-13T20:08:24Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/SQL/base_procs_ignition.sql",
+      "line": 5527,
+      "body": "`UNION` (without `ALL`) forces SQL Server to do a distinct/sort over the combined result set. Since `SiteCaptureUploadRequests` and `SiteCaptureUploadRequestsArchive` are two separate tables and a given `CaptureGuid` is not expected to exist in both (the archive holds requests that were moved out of the active table), `UNION ALL` would give the same results without the deduplication overhead. Recommend switching to `UNION ALL` here.\n",
+      "author": "Copilot",
+      "created_at": "2026-05-13T20:08:24Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/SQL/base_procs_ignition.sql",
+      "line": 5531,
+      "body": "Per the SQL guidelines, expressions returning 1/0 in SELECT lists should be cast to `BIT`, otherwise SQL Server infers `INT`. The `Uploaded` column is read into a `bool` (`Global.BoolFromDB`) on the C# side, so wrap the `CASE` expression: `CAST(CASE WHEN CapturedAt IS NULL THEN 0 ELSE 1 END AS BIT) AS Uploaded`. Apply to both branches of the UNION.",
+      "author": "Copilot",
+      "created_at": "2026-05-13T20:08:24Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Common/Components/Mobile/MobileCapability.cs",
+      "line": 30,
+      "body": "Spelling: `syning` → `syncing`, and `suported` → `supported` in the comments below.\n",
+      "author": "Copilot",
+      "created_at": "2026-05-13T20:08:25Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Common/Components/Mobile/MobileCapability.cs",
+      "line": 24,
+      "body": "Spelling: `sever` → `server` in the existing comment for `WorkflowTemplates` (now commented out).\n",
+      "author": "Copilot",
+      "created_at": "2026-05-13T20:08:25Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Common/Components/Mobile/MobileSyncPrep.cs",
+      "line": 36,
+      "body": "Removing `Support360`, `Announce360`, and `Names50` from the advertised capability list is a behavioral change for any mobile client that gates features on these flags being present in the sync prep response. The companion comment in `MobileCapability.cs` says these \"should be supported on all servers now,\" but mobile clients that still check `capabilities.includes(Support360)` (etc.) will silently believe the server lacks the capability. Please confirm the minimum supported mobile client version no longer reads these flags before merging — otherwise older mobile builds will regress (e.g. stop offering 360 photo/video uploads).\n",
+      "author": "Copilot",
+      "created_at": "2026-05-13T20:08:25Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/SiteCapture/SiteCaptureUploadRequestSystem.cs",
+      "line": 13,
+      "body": "Fixed in push",
+      "author": "rroesler",
+      "created_at": "2026-05-14T19:23:49Z",
+      "in_reply_to_id": 3237140314
+    },
+    {
+      "path": "Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs",
+      "line": 3452,
+      "body": "Good point.  Fixed ",
+      "author": "rroesler",
+      "created_at": "2026-05-14T19:25:11Z",
+      "in_reply_to_id": 3237140383
+    },
+    {
+      "path": "Core/SQL/base_procs_ignition.sql",
+      "line": 5527,
+      "body": "Switch to CaptureFileLocation ",
+      "author": "rroesler",
+      "created_at": "2026-05-14T19:27:38Z",
+      "in_reply_to_id": 3237140403
+    },
+    {
+      "path": "Core/SQL/base_procs_ignition.sql",
+      "line": 5531,
+      "body": "OK",
+      "author": "rroesler",
+      "created_at": "2026-05-14T19:29:10Z",
+      "in_reply_to_id": 3237140423
+    },
+    {
+      "path": "Core/Common/Components/Mobile/MobileSyncPrep.cs",
+      "line": 36,
+      "body": "Yes, I guess there could be some old mobiles that still need these for a while. ",
+      "author": "rroesler",
+      "created_at": "2026-05-14T19:30:49Z",
+      "in_reply_to_id": 3237140508
+    },
+    {
+      "path": "Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs",
+      "line": 3444,
+      "body": "@copilot apply changes based on [this feedback](https://github.com/Trimble-Construction/projectsight/pull/10797#discussion_r3237140355)",
+      "author": "rroesler",
+      "created_at": "2026-05-14T20:00:04Z",
+      "in_reply_to_id": 3237140355
+    },
+    {
+      "path": "Core/Common/Components/Mobile/MobileCapability.cs",
+      "line": 30,
+      "body": "Fixed now",
+      "author": "rroesler",
+      "created_at": "2026-05-14T20:00:18Z",
+      "in_reply_to_id": 3237140454
+    },
+    {
+      "path": "Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs",
+      "line": 3444,
+      "body": "Fixed in 6e8f581 — corrected `Retrive` → `Retrieve` and `Statues` → `Statuses` in the summary, and filled in all `<param>` and `<returns>` tags with meaningful descriptions.",
+      "author": "Copilot",
+      "created_at": "2026-05-14T20:02:28Z",
+      "in_reply_to_id": 3237140355
+    },
+    {
+      "path": "Core/Common/Components/Mobile/MobileSyncPrep.cs",
+      "line": 36,
+      "body": "`Support360`, `SiteCapture`, `Announce360`, and `Names50` are already retained in the advertised capabilities list in `MobileSyncPrep.cs` (with a \"Keep until April, 2027\" comment), so older mobile builds will continue to see those flags. No change needed here.",
+      "author": "Copilot",
+      "created_at": "2026-05-14T20:02:32Z",
+      "in_reply_to_id": 3237140508
+    }
+  ],
+  "issue_comments": [
+    {
+      "body": "@kcostenbader I addressed the Copilot comments but now I need approved ",
+      "author": "rroesler",
+      "created_at": "2026-05-14T20:32:49Z"
+    },
+    {
+      "body": "@kcostenbader Ping ",
+      "author": "rroesler",
+      "created_at": "2026-05-19T18:52:25Z"
+    }
+  ],
+  "files": [
+    {
+      "filename": "Core/API Layer/ProjectSight.ServicesAPI/Packer.manifest",
+      "status": "modified",
+      "additions": 0,
+      "deletions": 7,
+      "patch": "@@ -2,15 +2,13 @@\n Base:bin\\Debug\\net8.0-windows\\\n Mount:ServicesAPI\n ProjectSight.ServicesAPI.exe\n-ProjectSight.WebAPI.exe\n GCCM.Common.SystemFramework.pdb\n ProjectSight.Common.Components.pdb\n ProjectSight.DataAccess.pdb\n ProjectSight.Scheduler.ClientSDK.pdb\n ProjectSight.Scheduler.Components.pdb\n ProjectSight.ServicesAPI.pdb\n ProjectSight.WebAPI.Components.pdb\n-ProjectSight.WebAPI.pdb\n Ardalis.GuardClauses.dll\n AWSSDK.Core.dll\n AWSSDK.S3.dll\n@@ -75,7 +73,6 @@ ProjectSight.Scheduler.ClientSDK.dll\n ProjectSight.Scheduler.Components.dll\n ProjectSight.ServicesAPI.dll\n ProjectSight.WebAPI.Components.dll\n-ProjectSight.WebAPI.dll\n SendGrid.dll\n SixLabors.Fonts.dll\n SixLabors.ImageSharp.dll\n@@ -107,11 +104,7 @@ appsettings.json\n ProjectSight.ServicesAPI.deps.json\n ProjectSight.ServicesAPI.runtimeconfig.json\n ProjectSight.ServicesAPI.staticwebassets.endpoints.json\n-ProjectSight.WebAPI.deps.json\n-ProjectSight.WebAPI.runtimeconfig.json\n-ProjectSight.WebAPI.staticwebassets.endpoints.json\n ProjectSight.ServicesAPI.dll.config\n-ProjectSight.WebAPI.dll.config\n Web.config\n runtimes\\win\\lib\\netcoreapp2.1\\System.Data.SqlClient.dll\n runtimes\\win-x64\\lib\\netstandard2.0\\Microsoft.Solver.Foundation.dll"
+    },
+    {
+      "filename": "Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs",
+      "status": "modified",
+      "additions": 30,
+      "deletions": 0,
+      "patch": "@@ -3420,6 +3420,8 @@ public async Task<ProjectSightActionResult> GetIncludeYesNoNAFalse(Guid portfoli\n         [Produces(typeof(SiteCaptureUploadRequest))]\n         public async Task<ProjectSightActionResult> CompleteMayaUpload(Guid portfolioGuid, int projectId, [FromBody] SiteCaptureRegistrationRequest request, CancellationToken cancellationToken)\n         {\n+            // NOT used by mobile but used for manual testing \n+\n             await ConfigureAccessForPortfolioDBUserAsync(portfolioGuid, projectId, cancellationToken: cancellationToken);\n \n             var error = new ErrorEncountered();\n@@ -3433,6 +3435,34 @@ public async Task<ProjectSightActionResult> CompleteMayaUpload(Guid portfolioGui\n             return new ProjectSightActionResult(Ok(result));\n         }\n \n+        /// <summary>\n+        /// Retrieve Site Capture Processing / Upload Statuses for a given portfolio and project.\n+        /// </summary>\n+        /// <param name=\"portfolioGuid\">The GUID of the portfolio.</param>\n+        /// <param name=\"projectId\">The ID of the project.</param>\n+        /// <param name=\"dtLastSyncDateTime\">Only records modified after this timestamp are returned. Defaults to all records if not specified.</param>\n+        /// <returns>A list of <see cref=\"MobileSiteCaptureState\"/> describing the current processing/upload status for each Site Capture upload request.</returns>\n+        [Route(\"v{version:apiVersion}/{portfolioGuid:guid}/{projectId:int:min(1)}/sync/siteCaptureProcessingState\")]\n+        [HttpGet]\n+        [Produces(typeof(List<MobileSiteCaptureState>))]\n+        public async Task<ProjectSightActionResult> SiteCaptureProcessingState(Guid portfolioGuid, int projectId, DateTimeOffset? dtLastSyncDateTime = null, CancellationToken cancellationToken = default)\n+        {\n+            // Used in 2.45.2 and newer \n+\n+            await ConfigureAccessForPortfolioDBUserAsync(portfolioGuid, projectId, cancellationToken: cancellationToken);\n+\n+            var error = new ErrorEncountered();\n+\n+            var captureSystem = new SiteCaptureUploadRequestSystem();\n+\n+            var result = captureSystem.GetUploadProcessingStates(RequestedBy, dtLastSyncDateTime ?? DateTimeOffset.MinValue);\n+\n+            RaiseErrorIfHasMessage(error);\n+\n+            return new ProjectSightActionResult(Ok(result));\n+        }\n+\n+\n         #endregion // SiteCapture\n \n         #region HELPERS / OVERRIDES"
+    },
+    {
+      "filename": "Core/Business Layer/DataAccess/SiteCapture/SiteCaptureUploadRequestSystem.cs",
+      "status": "modified",
+      "additions": 67,
+      "deletions": 0,
+      "patch": "@@ -1,6 +1,8 @@\n using GCCM.Common.SystemFramework;\n+\n using ProjectSight.Common.Components;\n using ProjectSight.Common.Components.ApplicationEvents;\n+using ProjectSight.Common.Components.Mobile;\n using ProjectSight.Common.Components.SiteCapture.Interfaces;\n using ProjectSight.DataAccess.SiteCapture.API;\n using System;\n@@ -162,6 +164,71 @@ public void CompleteRequestForWebUploader(IRequestedBy requestedBy, int recordId\n             }\n         }\n \n+\n+        public List<MobileSiteCaptureState> GetUploadProcessingStates(IRequestedBy requestedBy, DateTimeOffset lastSyncDateTime)\n+        {\n+            // Exceptions are handled by the caller\n+\n+            // Comment: perhaps mobile should send a list of GUIDS to the server rather than return all Uploads \n+\n+            // @PortfolioId uniqueidentifier,\n+            // @ProjectId        int,\n+            // @LastSyncDateTime datetimeoffset\n+            const string STORED_PROC = \"s_enc_get_SiteCaptureProcessingStates\";\n+\n+            using (var ignitionDB = _dbHelperFactory.NewDBHelperIgnition(requestedBy))\n+            {\n+                using (var reader = ignitionDB.ExecuteReader(STORED_PROC, requestedBy.OrganizationID, requestedBy.ProjectID, lastSyncDateTime))\n+                {\n+                    var result = new List<MobileSiteCaptureState>();\n+\n+                    while (reader.Read())\n+                    {\n+                        var record = new MobileSiteCaptureState();\n+                        record.UploadGuid = Global.GuidFromDB(reader[nameof(MobileSiteCaptureState.UploadGuid)]);\n+                        record.LastModified = Global.DateFromDB(reader[nameof(MobileSiteCaptureState.LastModified)]);\n+                        record.Uploaded = Global.BoolFromDB(reader[nameof(MobileSiteCaptureState.Uploaded)]);\n+                        var status = (SiteCaptureUploadRequest.Statuses)Global.IntFromDB(reader[\"CaptureStatus\"]);\n+\n+                        switch (status)\n+                        {\n+                            case SiteCaptureUploadRequest.Statuses.None:\n+                                record.UploadState = MobileSiteCaptureState.States.Exists; // if a record exists the Request must exist \n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.WaitingForFloorProcessingToComplete:\n+                                record.UploadState = MobileSiteCaptureState.States.ProcessingFloorPlan;\n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.ReadyToCreateCapture:\n+                                record.UploadState = MobileSiteCaptureState.States.Waiting;\n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.CreatingCapture:\n+                                record.UploadState = MobileSiteCaptureState.States.ProcessingCapture;\n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.WaitingForCaptureProcessingToComplete:\n+                                record.UploadState = MobileSiteCaptureState.States.ProcessingCapture;\n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.Failed:\n+                                record.UploadState = MobileSiteCaptureState.States.Failed;\n+                                break;\n+\n+                            default:\n+                                record.UploadState = MobileSiteCaptureState.States.Exists;\n+                                break;\n+                        }\n+\n+                        result.Add(record);\n+                    }\n+\n+                    return result;\n+                }\n+            }\n+        }\n+\n         #endregion\n \n         #region Read"
+    },
+    {
+      "filename": "Core/Business Layer/DataAccess/SyncSystem.cs",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 3,
+      "patch": "@@ -62,7 +62,6 @@ public MobileSyncPrep PrepareForSync(IRequestedBy requestedBy, int groupID, stri\n \n                 if (organization.SiteCapture)\n                 {\n-                    result.AddCapability(MobileCapability.SiteCapture);\n                     siteCaptureEnabled = true;\n                 }\n             }\n@@ -109,8 +108,7 @@ public MobileSyncPrep PrepareForSync(IRequestedBy requestedBy, int groupID, stri\n \n                 if (projectUsesTemplates)\n                 {\n-                    result.AddCapability(MobileCapability.UsesTemplates);\n-                    result.SetNotSupportedIfNeeded(claims, MobileCapability.WorkflowTemplates, \"Workflow Templates\");\n+                    result.AddCapability(MobileCapability.UsesTemplates); // will trigger special migration \n                 }\n \n                 return result;"
+    },
+    {
+      "filename": "Core/Common/Components/Mobile/MobileCapability.cs",
+      "status": "modified",
+      "additions": 15,
+      "deletions": 3,
+      "patch": "@@ -8,18 +8,30 @@ public enum MobileCapability // just Capability on mobile side\n         // Test = 1\n         // PopulationResult = 2,\n         AIDailyReport = 3, // from server, portfolio level \n-        WorkflowTemplates = 4, // to and from sever, server level \n         UsesTemplates = 5, // from server, project level \n \n         UploadComplete = 6, // to server, server level -- when Photos depends on UploadComplete\n+\n+        // Now universaly suported, keep for old mobiles until April, 2027 \n         Support360 = 9, // to and from server, server level -- server support 360 Photos and Videos  \n-        Announce360 = 12, // from server, server level -- announce new captures (UploadCaptured) \n         SiteCapture = 10, // from server, project level -- portfolio / project has enabled SiteCapture feature\n+        Announce360 = 12, // from server, server level -- announce new captures (UploadCaptured) \n+        Names50 = 11, // from server, support 50 character contact and approver names \n \n         // if neither of these are set, Mobile will only use PS uploads \n         AzureUploads = 7, // to server, server level -- not used yet\n         AWSUploads = 8, // to server, server level -- not used yet \n \n-        Names50 = 11, // from server, support 50 character contact and approver names \n+        // Keep for old mobiles until June, 2027,\n+        SyncUploadStatus = 13, // from server, server level -- supports syning upload status back to mobile \n+\n+        NextNumber = 14, // just bookkeeping .. used to remember the first unused number \n+\n+        // Should be suported on all servers now \n+        //WorkflowTemplates = 4, // to and from server, server level \n+        //Support360 = 9, // to and from server, server level -- server support 360 Photos and Videos  \n+        //SiteCapture = 10, // from server, project level -- portfolio / project has enabled SiteCapture feature\n+        //Announce360 = 12, // from server, server level -- announce new captures (UploadCaptured) \n+        //Names50 = 11, // from server, support 50 character contact and approver names \n     }\n }"
+    },
+    {
+      "filename": "Core/Common/Components/Mobile/MobileSiteCaptureState.cs",
+      "status": "added",
+      "additions": 25,
+      "deletions": 0,
+      "patch": "@@ -0,0 +1,25 @@\n+﻿using System;\n+using System.Collections.Generic;\n+using System.Linq;\n+using System.Text;\n+using System.Threading.Tasks;\n+\n+namespace ProjectSight.Common.Components.Mobile\n+{\n+    public class MobileSiteCaptureState\n+    {\n+        public enum States\n+        {\n+            Exists = 0,\n+            ProcessingFloorPlan = 1,\n+            Waiting = 2,\n+            ProcessingCapture = 3,\n+            Failed = 4\n+        }\n+\n+        public Guid UploadGuid { get; set; }\n+        public States UploadState { get; set; }\n+        public bool Uploaded { get; set; }\n+        public DateTimeOffset LastModified { get; set; }\n+    }\n+}"
+    },
+    {
+      "filename": "Core/Common/Components/Mobile/MobileSyncPrep.cs",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 0,
+      "patch": "@@ -34,9 +34,14 @@ public MobileSyncPrep(IRequestedBy requestedBy, GainsightUserDetails userinfo)\n                 // MobileCapability.AIDailyReport, // not all servers support ... \n                 // MobileCapability.UploadComplete, // when normal Photos use UploadComplete \n \n+                // Keep until April, 2027\n                 MobileCapability.Support360,\n+                MobileCapability.SiteCapture,\n                 MobileCapability.Announce360,\n                 MobileCapability.Names50,\n+\n+                // Keep until June, 2027\n+                MobileCapability.SyncUploadStatus\n             };\n \n             User = new UserInfo(requestedBy, userinfo);"
+    },
+    {
+      "filename": "Core/DeployScripts/Packer.manifest",
+      "status": "modified",
+      "additions": 0,
+      "deletions": 1,
+      "patch": "@@ -11,7 +11,6 @@ StartServices.ps1\n Uninstaller.ps1\n UpdateIgnitionMasterDB.ps1\n UpdatePortfolioDBs.ps1\n-Overrides\\MobileService-Web.config\n Overrides\\ServerMonitor-ServerMonitor.exe.config\n Overrides\\ServicesAPI-Web.config\n Overrides\\WebAPI-Web.config"
+    },
+    {
+      "filename": "Core/SQL/base_procs_ignition.sql",
+      "status": "modified",
+      "additions": 30,
+      "deletions": 0,
+      "patch": "@@ -5509,6 +5509,36 @@ AS\n    WHERE Status = 0 and Locked = 1\n GO\n \n+/****** Object:  Stored Procedure s_enc_get_SiteCaptureProcessingStates ******/\n+CREATE PROCEDURE dbo.s_enc_get_SiteCaptureProcessingStates\n+  @PortfolioId      uniqueidentifier,\n+  @ProjectId        int,\n+  @LastSyncDateTime datetimeoffset\n+AS\n+  SELECT CaptureGuid as UploadGuid,\n+         Status as CaptureStatus,\n+         Cast((CASE WHEN CaptureFileLocation IS NULL THEN 0 ELSE 1 END) AS BIT) as Uploaded,\n+         LastModified \n+    FROM SiteCaptureUploadRequests\n+   WHERE PortfolioId = @PortfolioId\n+     AND ProjectId = @ProjectID\n+     AND LastModified >= @LastSyncDateTime\n+\n+   UNION\n+   \n+  SELECT CaptureGuid as UploadGuid,\n+         Status as CaptureStatus,\n+         Cast((CASE WHEN CaptureFileLocation IS NULL THEN 0 ELSE 1 END) AS BIT) as Uploaded,\n+         LastModified \n+    FROM SiteCaptureUploadRequestsArchive \n+   WHERE PortfolioId = @PortfolioId\n+     AND ProjectId = @ProjectID\n+     AND LastModified >= @LastSyncDateTime;\n+\n+  -- Consider indexes on PortfolioId, ProjectId, LastModified for both tables if this query is slow\n+  -- and it is expected to return a small number of records based on the LastSyncDateTime filter \n+GO\n+\n /****** Object:  Stored Procedure s_enc_get_SiteCaptureUploadRequest_by_MayaCaptureId ******/\n CREATE PROCEDURE dbo.s_enc_get_SiteCaptureUploadRequest_by_MayaCaptureId\n   @MayaCaptureId           nvarchar(36)"
+    }
+  ],
+  "diff": "diff --git a/Core/API Layer/ProjectSight.ServicesAPI/Packer.manifest b/Core/API Layer/ProjectSight.ServicesAPI/Packer.manifest\nindex 5474acdbb31..0628e71bfd5 100644\n--- a/Core/API Layer/ProjectSight.ServicesAPI/Packer.manifest\t\n+++ b/Core/API Layer/ProjectSight.ServicesAPI/Packer.manifest\t\n@@ -2,7 +2,6 @@\n Base:bin\\Debug\\net8.0-windows\\\n Mount:ServicesAPI\n ProjectSight.ServicesAPI.exe\n-ProjectSight.WebAPI.exe\n GCCM.Common.SystemFramework.pdb\n ProjectSight.Common.Components.pdb\n ProjectSight.DataAccess.pdb\n@@ -10,7 +9,6 @@ ProjectSight.Scheduler.ClientSDK.pdb\n ProjectSight.Scheduler.Components.pdb\n ProjectSight.ServicesAPI.pdb\n ProjectSight.WebAPI.Components.pdb\n-ProjectSight.WebAPI.pdb\n Ardalis.GuardClauses.dll\n AWSSDK.Core.dll\n AWSSDK.S3.dll\n@@ -75,7 +73,6 @@ ProjectSight.Scheduler.ClientSDK.dll\n ProjectSight.Scheduler.Components.dll\n ProjectSight.ServicesAPI.dll\n ProjectSight.WebAPI.Components.dll\n-ProjectSight.WebAPI.dll\n SendGrid.dll\n SixLabors.Fonts.dll\n SixLabors.ImageSharp.dll\n@@ -107,11 +104,7 @@ appsettings.json\n ProjectSight.ServicesAPI.deps.json\n ProjectSight.ServicesAPI.runtimeconfig.json\n ProjectSight.ServicesAPI.staticwebassets.endpoints.json\n-ProjectSight.WebAPI.deps.json\n-ProjectSight.WebAPI.runtimeconfig.json\n-ProjectSight.WebAPI.staticwebassets.endpoints.json\n ProjectSight.ServicesAPI.dll.config\n-ProjectSight.WebAPI.dll.config\n Web.config\n runtimes\\win\\lib\\netcoreapp2.1\\System.Data.SqlClient.dll\n runtimes\\win-x64\\lib\\netstandard2.0\\Microsoft.Solver.Foundation.dll\ndiff --git a/Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs b/Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs\nindex 0e34ee9c503..9a6c651ad31 100644\n--- a/Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs\t\n+++ b/Core/API Layer/ProjectSight.WebAPI/Controllers/v1/SyncController.cs\t\n@@ -3420,6 +3420,8 @@ public async Task<ProjectSightActionResult> GetIncludeYesNoNAFalse(Guid portfoli\n         [Produces(typeof(SiteCaptureUploadRequest))]\n         public async Task<ProjectSightActionResult> CompleteMayaUpload(Guid portfolioGuid, int projectId, [FromBody] SiteCaptureRegistrationRequest request, CancellationToken cancellationToken)\n         {\n+            // NOT used by mobile but used for manual testing \n+\n             await ConfigureAccessForPortfolioDBUserAsync(portfolioGuid, projectId, cancellationToken: cancellationToken);\n \n             var error = new ErrorEncountered();\n@@ -3433,6 +3435,34 @@ public async Task<ProjectSightActionResult> CompleteMayaUpload(Guid portfolioGui\n             return new ProjectSightActionResult(Ok(result));\n         }\n \n+        /// <summary>\n+        /// Retrieve Site Capture Processing / Upload Statuses for a given portfolio and project.\n+        /// </summary>\n+        /// <param name=\"portfolioGuid\">The GUID of the portfolio.</param>\n+        /// <param name=\"projectId\">The ID of the project.</param>\n+        /// <param name=\"dtLastSyncDateTime\">Only records modified after this timestamp are returned. Defaults to all records if not specified.</param>\n+        /// <returns>A list of <see cref=\"MobileSiteCaptureState\"/> describing the current processing/upload status for each Site Capture upload request.</returns>\n+        [Route(\"v{version:apiVersion}/{portfolioGuid:guid}/{projectId:int:min(1)}/sync/siteCaptureProcessingState\")]\n+        [HttpGet]\n+        [Produces(typeof(List<MobileSiteCaptureState>))]\n+        public async Task<ProjectSightActionResult> SiteCaptureProcessingState(Guid portfolioGuid, int projectId, DateTimeOffset? dtLastSyncDateTime = null, CancellationToken cancellationToken = default)\n+        {\n+            // Used in 2.45.2 and newer \n+\n+            await ConfigureAccessForPortfolioDBUserAsync(portfolioGuid, projectId, cancellationToken: cancellationToken);\n+\n+            var error = new ErrorEncountered();\n+\n+            var captureSystem = new SiteCaptureUploadRequestSystem();\n+\n+            var result = captureSystem.GetUploadProcessingStates(RequestedBy, dtLastSyncDateTime ?? DateTimeOffset.MinValue);\n+\n+            RaiseErrorIfHasMessage(error);\n+\n+            return new ProjectSightActionResult(Ok(result));\n+        }\n+\n+\n         #endregion // SiteCapture\n \n         #region HELPERS / OVERRIDES\ndiff --git a/Core/Business Layer/DataAccess/SiteCapture/SiteCaptureUploadRequestSystem.cs b/Core/Business Layer/DataAccess/SiteCapture/SiteCaptureUploadRequestSystem.cs\nindex 3699fb16a87..b2bffed85df 100644\n--- a/Core/Business Layer/DataAccess/SiteCapture/SiteCaptureUploadRequestSystem.cs\t\n+++ b/Core/Business Layer/DataAccess/SiteCapture/SiteCaptureUploadRequestSystem.cs\t\n@@ -1,6 +1,8 @@\n using GCCM.Common.SystemFramework;\n+\n using ProjectSight.Common.Components;\n using ProjectSight.Common.Components.ApplicationEvents;\n+using ProjectSight.Common.Components.Mobile;\n using ProjectSight.Common.Components.SiteCapture.Interfaces;\n using ProjectSight.DataAccess.SiteCapture.API;\n using System;\n@@ -162,6 +164,71 @@ public void CompleteRequestForWebUploader(IRequestedBy requestedBy, int recordId\n             }\n         }\n \n+\n+        public List<MobileSiteCaptureState> GetUploadProcessingStates(IRequestedBy requestedBy, DateTimeOffset lastSyncDateTime)\n+        {\n+            // Exceptions are handled by the caller\n+\n+            // Comment: perhaps mobile should send a list of GUIDS to the server rather than return all Uploads \n+\n+            // @PortfolioId uniqueidentifier,\n+            // @ProjectId        int,\n+            // @LastSyncDateTime datetimeoffset\n+            const string STORED_PROC = \"s_enc_get_SiteCaptureProcessingStates\";\n+\n+            using (var ignitionDB = _dbHelperFactory.NewDBHelperIgnition(requestedBy))\n+            {\n+                using (var reader = ignitionDB.ExecuteReader(STORED_PROC, requestedBy.OrganizationID, requestedBy.ProjectID, lastSyncDateTime))\n+                {\n+                    var result = new List<MobileSiteCaptureState>();\n+\n+                    while (reader.Read())\n+                    {\n+                        var record = new MobileSiteCaptureState();\n+                        record.UploadGuid = Global.GuidFromDB(reader[nameof(MobileSiteCaptureState.UploadGuid)]);\n+                        record.LastModified = Global.DateFromDB(reader[nameof(MobileSiteCaptureState.LastModified)]);\n+                        record.Uploaded = Global.BoolFromDB(reader[nameof(MobileSiteCaptureState.Uploaded)]);\n+                        var status = (SiteCaptureUploadRequest.Statuses)Global.IntFromDB(reader[\"CaptureStatus\"]);\n+\n+                        switch (status)\n+                        {\n+                            case SiteCaptureUploadRequest.Statuses.None:\n+                                record.UploadState = MobileSiteCaptureState.States.Exists; // if a record exists the Request must exist \n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.WaitingForFloorProcessingToComplete:\n+                                record.UploadState = MobileSiteCaptureState.States.ProcessingFloorPlan;\n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.ReadyToCreateCapture:\n+                                record.UploadState = MobileSiteCaptureState.States.Waiting;\n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.CreatingCapture:\n+                                record.UploadState = MobileSiteCaptureState.States.ProcessingCapture;\n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.WaitingForCaptureProcessingToComplete:\n+                                record.UploadState = MobileSiteCaptureState.States.ProcessingCapture;\n+                                break;\n+\n+                            case SiteCaptureUploadRequest.Statuses.Failed:\n+                                record.UploadState = MobileSiteCaptureState.States.Failed;\n+                                break;\n+\n+                            default:\n+                                record.UploadState = MobileSiteCaptureState.States.Exists;\n+                                break;\n+                        }\n+\n+                        result.Add(record);\n+                    }\n+\n+                    return result;\n+                }\n+            }\n+        }\n+\n         #endregion\n \n         #region Read\ndiff --git a/Core/Business Layer/DataAccess/SyncSystem.cs b/Core/Business Layer/DataAccess/SyncSystem.cs\nindex ce918ee032b..13e079059ad 100644\n--- a/Core/Business Layer/DataAccess/SyncSystem.cs\t\n+++ b/Core/Business Layer/DataAccess/SyncSystem.cs\t\n@@ -62,7 +62,6 @@ public MobileSyncPrep PrepareForSync(IRequestedBy requestedBy, int groupID, stri\n \n                 if (organization.SiteCapture)\n                 {\n-                    result.AddCapability(MobileCapability.SiteCapture);\n                     siteCaptureEnabled = true;\n                 }\n             }\n@@ -109,8 +108,7 @@ public MobileSyncPrep PrepareForSync(IRequestedBy requestedBy, int groupID, stri\n \n                 if (projectUsesTemplates)\n                 {\n-                    result.AddCapability(MobileCapability.UsesTemplates);\n-                    result.SetNotSupportedIfNeeded(claims, MobileCapability.WorkflowTemplates, \"Workflow Templates\");\n+                    result.AddCapability(MobileCapability.UsesTemplates); // will trigger special migration \n                 }\n \n                 return result;\ndiff --git a/Core/Common/Components/Mobile/MobileCapability.cs b/Core/Common/Components/Mobile/MobileCapability.cs\nindex 492f8a82f89..2c6ce13bfda 100644\n--- a/Core/Common/Components/Mobile/MobileCapability.cs\n+++ b/Core/Common/Components/Mobile/MobileCapability.cs\n@@ -8,18 +8,30 @@ public enum MobileCapability // just Capability on mobile side\n         // Test = 1\n         // PopulationResult = 2,\n         AIDailyReport = 3, // from server, portfolio level \n-        WorkflowTemplates = 4, // to and from sever, server level \n         UsesTemplates = 5, // from server, project level \n \n         UploadComplete = 6, // to server, server level -- when Photos depends on UploadComplete\n+\n+        // Now universaly suported, keep for old mobiles until April, 2027 \n         Support360 = 9, // to and from server, server level -- server support 360 Photos and Videos  \n-        Announce360 = 12, // from server, server level -- announce new captures (UploadCaptured) \n         SiteCapture = 10, // from server, project level -- portfolio / project has enabled SiteCapture feature\n+        Announce360 = 12, // from server, server level -- announce new captures (UploadCaptured) \n+        Names50 = 11, // from server, support 50 character contact and approver names \n \n         // if neither of these are set, Mobile will only use PS uploads \n         AzureUploads = 7, // to server, server level -- not used yet\n         AWSUploads = 8, // to server, server level -- not used yet \n \n-        Names50 = 11, // from server, support 50 character contact and approver names \n+        // Keep for old mobiles until June, 2027,\n+        SyncUploadStatus = 13, // from server, server level -- supports syning upload status back to mobile \n+\n+        NextNumber = 14, // just bookkeeping .. used to remember the first unused number \n+\n+        // Should be suported on all servers now \n+        //WorkflowTemplates = 4, // to and from server, server level \n+        //Support360 = 9, // to and from server, server level -- server support 360 Photos and Videos  \n+        //SiteCapture = 10, // from server, project level -- portfolio / project has enabled SiteCapture feature\n+        //Announce360 = 12, // from server, server level -- announce new captures (UploadCaptured) \n+        //Names50 = 11, // from server, support 50 character contact and approver names \n     }\n }\ndiff --git a/Core/Common/Components/Mobile/MobileSiteCaptureState.cs b/Core/Common/Components/Mobile/MobileSiteCaptureState.cs\nnew file mode 100644\nindex 00000000000..78076a8fe27\n--- /dev/null\n+++ b/Core/Common/Components/Mobile/MobileSiteCaptureState.cs\n@@ -0,0 +1,25 @@\n+﻿using System;\n+using System.Collections.Generic;\n+using System.Linq;\n+using System.Text;\n+using System.Threading.Tasks;\n+\n+namespace ProjectSight.Common.Components.Mobile\n+{\n+    public class MobileSiteCaptureState\n+    {\n+        public enum States\n+        {\n+            Exists = 0,\n+            ProcessingFloorPlan = 1,\n+            Waiting = 2,\n+            ProcessingCapture = 3,\n+            Failed = 4\n+        }\n+\n+        public Guid UploadGuid { get; set; }\n+        public States UploadState { get; set; }\n+        public bool Uploaded { get; set; }\n+        public DateTimeOffset LastModified { get; set; }\n+    }\n+}\ndiff --git a/Core/Common/Components/Mobile/MobileSyncPrep.cs b/Core/Common/Components/Mobile/MobileSyncPrep.cs\nindex 856b17dd8df..defefab705e 100644\n--- a/Core/Common/Components/Mobile/MobileSyncPrep.cs\n+++ b/Core/Common/Components/Mobile/MobileSyncPrep.cs\n@@ -34,9 +34,14 @@ public MobileSyncPrep(IRequestedBy requestedBy, GainsightUserDetails userinfo)\n                 // MobileCapability.AIDailyReport, // not all servers support ... \n                 // MobileCapability.UploadComplete, // when normal Photos use UploadComplete \n \n+                // Keep until April, 2027\n                 MobileCapability.Support360,\n+                MobileCapability.SiteCapture,\n                 MobileCapability.Announce360,\n                 MobileCapability.Names50,\n+\n+                // Keep until June, 2027\n+                MobileCapability.SyncUploadStatus\n             };\n \n             User = new UserInfo(requestedBy, userinfo);\ndiff --git a/Core/DeployScripts/Packer.manifest b/Core/DeployScripts/Packer.manifest\nindex 8571534495d..ca22a616384 100644\n--- a/Core/DeployScripts/Packer.manifest\n+++ b/Core/DeployScripts/Packer.manifest\n@@ -11,7 +11,6 @@ StartServices.ps1\n Uninstaller.ps1\n UpdateIgnitionMasterDB.ps1\n UpdatePortfolioDBs.ps1\n-Overrides\\MobileService-Web.config\n Overrides\\ServerMonitor-ServerMonitor.exe.config\n Overrides\\ServicesAPI-Web.config\n Overrides\\WebAPI-Web.config\ndiff --git a/Core/SQL/base_procs_ignition.sql b/Core/SQL/base_procs_ignition.sql\nindex 21a5aa4aa99..cc31fdda7b8 100644\n--- a/Core/SQL/base_procs_ignition.sql\n+++ b/Core/SQL/base_procs_ignition.sql\n@@ -5509,6 +5509,36 @@ AS\n    WHERE Status = 0 and Locked = 1\n GO\n \n+/****** Object:  Stored Procedure s_enc_get_SiteCaptureProcessingStates ******/\n+CREATE PROCEDURE dbo.s_enc_get_SiteCaptureProcessingStates\n+  @PortfolioId      uniqueidentifier,\n+  @ProjectId        int,\n+  @LastSyncDateTime datetimeoffset\n+AS\n+  SELECT CaptureGuid as UploadGuid,\n+         Status as CaptureStatus,\n+         Cast((CASE WHEN CaptureFileLocation IS NULL THEN 0 ELSE 1 END) AS BIT) as Uploaded,\n+         LastModified \n+    FROM SiteCaptureUploadRequests\n+   WHERE PortfolioId = @PortfolioId\n+     AND ProjectId = @ProjectID\n+     AND LastModified >= @LastSyncDateTime\n+\n+   UNION\n+   \n+  SELECT CaptureGuid as UploadGuid,\n+         Status as CaptureStatus,\n+         Cast((CASE WHEN CaptureFileLocation IS NULL THEN 0 ELSE 1 END) AS BIT) as Uploaded,\n+         LastModified \n+    FROM SiteCaptureUploadRequestsArchive \n+   WHERE PortfolioId = @PortfolioId\n+     AND ProjectId = @ProjectID\n+     AND LastModified >= @LastSyncDateTime;\n+\n+  -- Consider indexes on PortfolioId, ProjectId, LastModified for both tables if this query is slow\n+  -- and it is expected to return a small number of records based on the LastSyncDateTime filter \n+GO\n+\n /****** Object:  Stored Procedure s_enc_get_SiteCaptureUploadRequest_by_MayaCaptureId ******/\n CREATE PROCEDURE dbo.s_enc_get_SiteCaptureUploadRequest_by_MayaCaptureId\n   @MayaCaptureId           nvarchar(36)\n"
+}

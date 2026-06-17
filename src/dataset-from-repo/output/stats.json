@@ -1,0 +1,32 @@
+{
+  "total_examples": 20,
+  "total_tokens": 84841,
+  "tokens": {
+    "min": 2547,
+    "max": 5085,
+    "mean": 4242,
+    "p50": 4447,
+    "p90": 4964,
+    "p95": 5004
+  },
+  "scores": {
+    "min": 40,
+    "max": 70,
+    "mean": 53
+  },
+  "diff_lines": {
+    "min": 50,
+    "max": 2197,
+    "mean": 545
+  },
+  "pr_types": {
+    "unknown": 10,
+    "feature": 3,
+    "bugfix": 2,
+    "test": 4,
+    "config": 1
+  },
+  "train_examples": 18,
+  "eval_examples": 2,
+  "skipped_token_limit": 0
+}

@@ -1,0 +1,596 @@
+================================================================================
+PRACTICAL GUIDE: DATA EXTRACTION FROM GITHUB REPOSITORIES
+For Fine-Tuning Qwen 35B with Commits, PRs, and Reviews
+================================================================================
+
+GOAL: Extract structured training data from your repository
+
+================================================================================
+TOOLS REQUIRED
+================================================================================
+
+✓ git CLI (installed locally)
+✓ GitHub CLI (gh) — for PR + review data
+✓ Python 3.10+ (with requests, gitpython)
+✓ 1-2 hours of runtime
+
+================================================================================
+STEP 1: EXTRACT COMMITS DATA
+================================================================================
+
+Command (get last N commits with full diffs):
+
+git log --format="%H|%at|%an|%ae|%s|%b" \
+    --name-status \
+    --diff-filter=ACDMRTUXB \
+    -p \
+    --max-count=10000 > commits_raw.log
+
+Output file size: ~100-500 MB (depending on repo size)
+
+Parse this with Python:
+
+```python
+import json
+from datetime import datetime
+import subprocess
+
+def extract_commits(repo_path, max_commits=5000):
+    """Extract commit metadata + diffs"""
+    
+    commits = []
+    cmd = [
+        'git', 'log',
+        '--format=%H%n%at%n%an%n%ae%n%s%n%b%n---END---',
+        '--name-status',
+        '-p',
+        f'--max-count={max_commits}'
+    ]
+    
+    result = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True)
+    
+    # Parse output (complex because of diffs)
+    # Detailed parsing code in reference section
+    
+    return commits
+
+# Usage:
+commits = extract_commits('/path/to/repo')
+with open('commits.json', 'w') as f:
+    json.dump(commits, f, indent=2)
+
+print(f"Extracted {len(commits)} commits")
+```
+
+OUTPUT FORMAT (commits.json):
+
+[
+  {
+    "commit_id": "a1b2c3d4...",
+    "timestamp": 1623456789,
+    "date": "2024-06-15T10:30:00Z",
+    "author_name": "Alice Smith",
+    "author_email": "alice@company.com",
+    "message": "Refactor database query builder\n\nImprove performance by using connection pooling",
+    "files_changed": ["src/db/query.py", "tests/db/test_query.py"],
+    "files_added": 0,
+    "files_deleted": 0,
+    "files_modified": 2,
+    "lines_added": 45,
+    "lines_deleted": 12,
+    "diff": "@@ -23,5 +23,8 @@\n context line...",
+    "merge_status": "merged"  # or "abandoned" if never merged
+  },
+  ...
+]
+
+KEY FIELDS:
+├─ commit_id: Unique identifier for sorting
+├─ timestamp: For ordering (curriculum)
+├─ message: Human intent (SFT input)
+├─ diff: What changed (SFT target)
+├─ files_changed: Scope of change
+├─ merge_status: Was it merged? (label for training)
+└─ author_name: For filtering (optional: senior vs junior commits)
+
+================================================================================
+STEP 2: EXTRACT PRS + REVIEWS DATA
+================================================================================
+
+Prerequisite: GitHub CLI authentication
+
+gh auth login  # One-time setup
+
+Then extract PRs:
+
+```python
+import subprocess
+import json
+from datetime import datetime
+
+def extract_prs(repo_owner, repo_name, max_prs=1000):
+    """Extract all PRs with review data"""
+    
+    prs = []
+    
+    # Get all closed PRs (merged or rejected)
+    cmd = [
+        'gh', 'pr', 'list',
+        f'--repo={repo_owner}/{repo_name}',
+        '--state=closed',
+        '--limit=1000',
+        '--json=number,title,body,state,createdAt,mergedAt,author,commits'
+    ]
+    
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    pr_list = json.loads(result.stdout)
+    
+    for pr in pr_list[:max_prs]:
+        pr_data = {
+            'pr_id': pr['number'],
+            'title': pr['title'],
+            'description': pr['body'],
+            'state': pr['state'],  # MERGED, CLOSED (not merged)
+            'created_at': pr['createdAt'],
+            'merged_at': pr['mergedAt'],
+            'author': pr['author']['login'],
+            'commit_count': len(pr['commits']),
+            'commits': [c['oid'] for c in pr['commits']],
+            'reviews': [],
+            'review_comments': []
+        }
+        
+        # Get reviews
+        review_cmd = [
+            'gh', 'pr', 'review',
+            f'{pr_data["pr_id"]}',
+            f'--repo={repo_owner}/{repo_name}',
+            '--json=author,state,submittedAt,body,comments'
+        ]
+        
+        review_result = subprocess.run(review_cmd, capture_output=True, text=True)
+        try:
+            reviews = json.loads(review_result.stdout)
+            pr_data['reviews'] = reviews
+        except:
+            pass
+        
+        # Get review comments (line-by-line feedback)
+        comment_cmd = [
+            'gh', 'pr', 'view',
+            f'{pr_data["pr_id"]}',
+            f'--repo={repo_owner}/{repo_name}',
+            '--json=reviewDecision,comments'
+        ]
+        
+        comment_result = subprocess.run(comment_cmd, capture_output=True, text=True)
+        try:
+            comments = json.loads(comment_result.stdout)
+            pr_data['review_decision'] = comments.get('reviewDecision', 'PENDING')
+            pr_data['comments'] = comments.get('comments', [])
+        except:
+            pass
+        
+        prs.append(pr_data)
+    
+    return prs
+
+# Usage:
+prs = extract_prs('your-org', 'your-repo')
+with open('prs.json', 'w') as f:
+    json.dump(prs, f, indent=2)
+
+print(f"Extracted {len(prs)} PRs with reviews")
+```
+
+OUTPUT FORMAT (prs.json):
+
+[
+  {
+    "pr_id": 123,
+    "title": "Add caching layer",
+    "description": "Improves query performance by 3x",
+    "state": "MERGED",
+    "created_at": "2024-06-15T10:00:00Z",
+    "merged_at": "2024-06-20T15:30:00Z",
+    "author": "alice",
+    "commit_count": 3,
+    "commits": ["a1b2c3d4", "e5f6g7h8", ...],
+    "review_decision": "APPROVED",
+    "reviews": [
+      {
+        "author": "bob",
+        "state": "APPROVED",
+        "submitted_at": "2024-06-19T14:00:00Z",
+        "body": "Looks good! Lgtm."
+      },
+      {
+        "author": "charlie",
+        "state": "COMMENTED",
+        "submitted_at": "2024-06-18T11:00:00Z",
+        "body": "Consider using LRU cache"
+      }
+    ],
+    "review_comments": [
+      {
+        "author": "bob",
+        "body": "This could be optimized with connection pooling",
+        "path": "src/db/pool.py",
+        "line": 42,
+        "diff_line": 15
+      },
+      {
+        "author": "bob",
+        "body": "Add docstring here",
+        "path": "src/db/pool.py",
+        "line": 50,
+        "diff_line": 23
+      }
+    ]
+  },
+  ...
+]
+
+KEY FIELDS:
+├─ pr_id: Identifier for linking to commits
+├─ commits: Which commits are in this PR
+├─ state: MERGED (reward=1) or CLOSED (reward=0)
+├─ reviews: Full review decisions
+├─ review_comments: Line-specific feedback
+└─ merged_at: For timeline ordering
+
+================================================================================
+STEP 3: CORRELATE COMMITS → PRS → REVIEWS
+================================================================================
+
+Link commits to their PR outcomes:
+
+```python
+import json
+
+def correlate_data(commits, prs):
+    """Link commits to PR outcomes + reviews"""
+    
+    # Build commit→PR mapping
+    commit_to_pr = {}
+    for pr in prs:
+        for commit_id in pr['commits']:
+            commit_to_pr[commit_id] = pr['pr_id']
+    
+    # Enrich commits with PR info
+    enriched = []
+    for commit in commits:
+        commit_copy = commit.copy()
+        
+        if commit['commit_id'] in commit_to_pr:
+            pr_id = commit_to_pr[commit['commit_id']]
+            pr = next(p for p in prs if p['pr_id'] == pr_id)
+            
+            commit_copy['pr_id'] = pr_id
+            commit_copy['pr_state'] = pr['state']
+            commit_copy['merged'] = pr['state'] == 'MERGED'
+            commit_copy['reviews'] = pr.get('reviews', [])
+            commit_copy['review_comments'] = pr.get('review_comments', [])
+            commit_copy['review_decision'] = pr.get('review_decision', 'PENDING')
+            
+            # Reward signal (for RL)
+            if pr['state'] == 'MERGED':
+                commit_copy['reward'] = 1.0
+            else:
+                commit_copy['reward'] = -1.0
+        else:
+            # Commit not in a PR (maybe direct push)
+            commit_copy['pr_id'] = None
+            commit_copy['merged'] = False
+            commit_copy['reward'] = 0.0  # Uncertain
+        
+        enriched.append(commit_copy)
+    
+    return enriched
+
+# Usage:
+with open('commits.json') as f:
+    commits = json.load(f)
+
+with open('prs.json') as f:
+    prs = json.load(f)
+
+enriched = correlate_data(commits, prs)
+
+with open('training_data.json', 'w') as f:
+    json.dump(enriched, f, indent=2)
+
+print(f"Correlated {len(enriched)} commits with PR data")
+print(f"  - Merged (reward=1): {sum(1 for c in enriched if c['merged'])}")
+print(f"  - Not merged (reward=0): {sum(1 for c in enriched if not c['merged'])}")
+```
+
+OUTPUT: training_data.json (commits + PR outcomes)
+
+================================================================================
+STEP 4: DATA QUALITY CHECKS
+================================================================================
+
+```python
+def quality_checks(training_data):
+    """Validate extracted data"""
+    
+    stats = {
+        'total_commits': len(training_data),
+        'commits_in_prs': sum(1 for c in training_data if c.get('pr_id')),
+        'merged': sum(1 for c in training_data if c.get('merged')),
+        'rejected': sum(1 for c in training_data if not c.get('merged') and c.get('pr_id')),
+        'avg_diff_size': sum(c.get('lines_added', 0) for c in training_data) / len(training_data),
+        'avg_files_changed': sum(c.get('files_modified', 0) for c in training_data) / len(training_data),
+    }
+    
+    # Flag potential issues
+    issues = []
+    
+    # Too few examples
+    if stats['total_commits'] < 500:
+        issues.append(f"WARNING: Only {stats['total_commits']} commits (recommend >=1000)")
+    
+    # Imbalanced rewards
+    merge_rate = stats['merged'] / stats['commits_in_prs']
+    if merge_rate > 0.95:
+        issues.append(f"WARNING: {merge_rate*100:.1f}% merge rate (very high, may bias learning)")
+    if merge_rate < 0.3:
+        issues.append(f"WARNING: {merge_rate*100:.1f}% merge rate (very low, few positive examples)")
+    
+    # Large diffs
+    if stats['avg_diff_size'] > 500:
+        issues.append(f"WARNING: Avg {stats['avg_diff_size']:.0f} lines/commit (may be too large)")
+    
+    return stats, issues
+
+# Usage:
+stats, issues = quality_checks(training_data)
+print("Dataset Statistics:")
+for key, val in stats.items():
+    print(f"  {key}: {val}")
+
+if issues:
+    print("\nPotential Issues:")
+    for issue in issues:
+        print(f"  - {issue}")
+```
+
+RECOMMENDED STATS:
+├─ Total commits: 2,000-10,000
+├─ Commits in PRs: >=80%
+├─ Merge rate: 40-60% (balanced positive/negative)
+├─ Avg diff size: 10-100 lines
+└─ Timespan: >=6 months (shows evolution)
+
+================================================================================
+STEP 5: CREATE TRAINING SPLITS
+================================================================================
+
+```python
+import json
+from datetime import datetime
+import random
+
+def create_splits(training_data, train_ratio=0.8, val_ratio=0.1):
+    """Split by time + stratified by merge status"""
+    
+    # Sort by timestamp
+    sorted_data = sorted(training_data, key=lambda x: x['timestamp'])
+    
+    # Time-based split (train: first 80%, val: next 10%, test: last 10%)
+    n = len(sorted_data)
+    train_end = int(n * train_ratio)
+    val_end = train_end + int(n * val_ratio)
+    
+    train = sorted_data[:train_end]
+    val = sorted_data[train_end:val_end]
+    test = sorted_data[val_end:]
+    
+    return {
+        'train': train,
+        'validation': val,
+        'test': test,
+        'stats': {
+            'train_size': len(train),
+            'train_merged': sum(1 for c in train if c['merged']),
+            'val_size': len(val),
+            'val_merged': sum(1 for c in val if c['merged']),
+            'test_size': len(test),
+            'test_merged': sum(1 for c in test if c['merged']),
+        }
+    }
+
+# Usage:
+splits = create_splits(training_data)
+
+for split_name, split_data in [('train', splits['train']), 
+                                ('val', splits['validation']), 
+                                ('test', splits['test'])]:
+    with open(f'training_data_{split_name}.json', 'w') as f:
+        json.dump(split_data, f)
+
+print("Dataset Splits:")
+for split, count in splits['stats'].items():
+    print(f"  {split}: {count}")
+```
+
+WHY TIME-BASED SPLIT:
+├─ Mirrors real-world evaluation (test on future data)
+├─ Prevents data leakage (you won't test on past commits)
+└─ Tests generalization to new code patterns
+
+================================================================================
+STEP 6: FORMAT FOR UNSLOTH TRAINING
+================================================================================
+
+For supervised learning (mid-training):
+
+```python
+def format_for_sft(commit, include_context=True):
+    """Format commit for supervised fine-tuning"""
+    
+    prompt = f"""Analyze the following commit and describe the code changes needed.
+
+Commit Message:
+{commit['message']}
+
+Current Code Context:
+{commit.get('context_before', 'N/A')[:500]}
+
+Files Changed: {', '.join(commit.get('files_changed', []))}
+
+Generate the diff that was applied:"""
+    
+    completion = commit['diff']
+    
+    return {
+        'text': f"{prompt}\n{completion}"
+    }
+
+# Usage:
+training_sft = []
+for commit in splits['train']:
+    training_sft.append(format_for_sft(commit))
+
+with open('training_sft.jsonl', 'w') as f:
+    for example in training_sft:
+        f.write(json.dumps(example) + '\n')
+```
+
+For reinforcement learning (HAW):
+
+```python
+def format_for_rl(commit_with_review):
+    """Format for RL training"""
+    
+    return {
+        'commit_id': commit_with_review['commit_id'],
+        'prompt': f"""Implement the following feature:
+{commit_with_review['message']}
+
+Code Context:
+{commit_with_review.get('context_before', '')[:500]}""",
+        'completion': commit_with_review['diff'],
+        'reward': commit_with_review['reward'],  # 1.0 or -1.0
+        'review_feedback': commit_with_review.get('review_comments', [])
+    }
+
+# Usage:
+training_rl = []
+for commit in splits['train']:
+    if commit.get('merged'):  # Only use merged commits for RL
+        training_rl.append(format_for_rl(commit))
+
+with open('training_rl.jsonl', 'w') as f:
+    for example in training_rl:
+        f.write(json.dumps(example) + '\n')
+```
+
+================================================================================
+COMPLETE EXTRACTION SCRIPT
+================================================================================
+
+Save as: extract_repo_data.py
+
+```python
+#!/usr/bin/env python3
+
+import subprocess
+import json
+import argparse
+from pathlib import Path
+from datetime import datetime
+
+def main():
+    parser = argparse.ArgumentParser(description='Extract training data from GitHub repo')
+    parser.add_argument('repo_path', help='Local git repo path')
+    parser.add_argument('--gh-repo', required=True, help='GitHub repo (owner/name)')
+    parser.add_argument('--max-commits', type=int, default=5000)
+    parser.add_argument('--max-prs', type=int, default=1000)
+    args = parser.parse_args()
+    
+    print("Step 1: Extracting commits...")
+    commits = extract_commits(args.repo_path, args.max_commits)
+    with open('commits.json', 'w') as f:
+        json.dump(commits, f)
+    print(f"  ✓ Extracted {len(commits)} commits")
+    
+    print("Step 2: Extracting PRs + reviews...")
+    prs = extract_prs(*args.gh_repo.split('/'), args.max_prs)
+    with open('prs.json', 'w') as f:
+        json.dump(prs, f)
+    print(f"  ✓ Extracted {len(prs)} PRs")
+    
+    print("Step 3: Correlating commits → PRs...")
+    enriched = correlate_data(commits, prs)
+    with open('training_data.json', 'w') as f:
+        json.dump(enriched, f)
+    print(f"  ✓ Correlated {len(enriched)} commits")
+    
+    print("Step 4: Quality checks...")
+    stats, issues = quality_checks(enriched)
+    for key, val in stats.items():
+        print(f"  {key}: {val}")
+    for issue in issues:
+        print(f"  ⚠ {issue}")
+    
+    print("Step 5: Creating splits...")
+    splits = create_splits(enriched)
+    for split_name, data in [('train', splits['train']),
+                             ('validation', splits['validation']),
+                             ('test', splits['test'])]:
+        with open(f'training_data_{split_name}.json', 'w') as f:
+            json.dump(data, f)
+    print(f"  ✓ Train: {splits['stats']['train_size']}")
+    print(f"  ✓ Val: {splits['stats']['val_size']}")
+    print(f"  ✓ Test: {splits['stats']['test_size']}")
+    
+    print("Step 6: Formatting for Unsloth...")
+    format_training_data(splits['train'], splits['validation'])
+    print("  ✓ SFT format: training_sft.jsonl")
+    print("  ✓ RL format: training_rl.jsonl")
+    
+    print("\nDone! Ready for fine-tuning.")
+    print(f"Output files:")
+    print(f"  - commits.json")
+    print(f"  - prs.json")
+    print(f"  - training_data.json (full + splits)")
+    print(f"  - training_sft.jsonl (for mid-training)")
+    print(f"  - training_rl.jsonl (for RL fine-tuning)")
+
+if __name__ == '__main__':
+    main()
+```
+
+Run with:
+python extract_repo_data.py /path/to/repo --gh-repo=owner/name --max-commits=5000
+
+================================================================================
+FINAL CHECKLIST
+================================================================================
+
+Before starting fine-tuning, verify:
+
+□ Data extracted:
+  □ commits.json exists (>500 commits)
+  □ prs.json exists (>100 PRs)
+  □ training_data.json exists (correlated)
+  
+□ Data quality:
+  □ Merge rate is 30-70% (balanced)
+  □ Avg diff size is reasonable (10-200 lines)
+  □ Timespan covers multiple months
+
+□ Splits created:
+  □ training_data_train.json (80%)
+  □ training_data_validation.json (10%)
+  □ training_data_test.json (10%)
+
+□ Formats ready:
+  □ training_sft.jsonl (for Unsloth SFT phase)
+  □ training_rl.jsonl (for RL phase)
+
+If all checked: Ready for Week 2 training!
+
+================================================================================

@@ -1,0 +1,50 @@
+{
+  "number": 10203,
+  "title": "PS-66772: Solved issue Custom View - User-added field for the custom List view is not saved.",
+  "body": "The actual issue was that the column used for grouping was being hidden as a column. This approach deletes the code lines that were causing the column to be hidden.",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "AbrahamSLT",
+  "created_at": "2026-03-05T20:18:33Z",
+  "merged_at": null,
+  "base_branch": "main",
+  "base_sha": "63ccec76968f6dc95356e3369c4906d90509cd24",
+  "head_branch": "abraham/wip/ps-66772",
+  "head_sha": "82cdde0d2246aafb8a9720467a738eaed09e6406",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 1,
+  "reviews": [
+    {
+      "state": "CHANGES_REQUESTED",
+      "body": "",
+      "author": "kcostenbader",
+      "submitted_at": "2026-03-05T23:35:21Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Web Layer/WebUI/DataViews.js",
+      "line": 6012,
+      "body": "This is not a valid fix. If the explanation for the bug is that the group column is not in the list, then that is the response to the bug: it is working as intended.",
+      "author": "kcostenbader",
+      "created_at": "2026-03-05T23:35:13Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/Web Layer/WebUI/DataViews.js",
+      "status": "modified",
+      "additions": 0,
+      "deletions": 29,
+      "patch": "@@ -6008,35 +6008,6 @@ var GridModule = (function () {\n             return;\n         }\n \n-        if (m_IsGrouped) {\n-            // after grouping, hide grouping column\n-            setTimeout(function () {\n-                try {\n-                    dataViewGrid.igGrid(\"hideColumn\", groupedKey);\n-                } catch (ex) {\n-                    wemiException.logException(ex);\n-                }\n-            }, 10);\n-        }\n-\n-        // get all columns from columnSettings\n-        const columns = dataViewGrid.igGrid(\"option\", \"columns\");\n-        const hiddenColumns = columns.filter(function (c) { return c.hidden; }).map(function (c) { return c.key; });\n-        const visibleColumns = ColumnSelectorModule.getVisibleColumns();\n-        // this is the previous grouped column which was hid\n-        const ungroupedColumn = visibleColumns.filter(function (key) { return hiddenColumns.indexOf(key) !== -1; });\n-\n-        if (ungroupedColumn.length !== 0) {\n-            // after ungrouping, show the ungrouped column\n-            setTimeout(function () {\n-                try {\n-                    dataViewGrid.igGrid(\"showColumn\", ungroupedColumn[0]);\n-                } catch (ex) {\n-                    wemiException.logException(ex);\n-                }\n-            }, 10);\n-        }\n-\n         adjustUiInVirtualization();\n     }\n "
+    }
+  ],
+  "diff": "diff --git a/Core/Web Layer/WebUI/DataViews.js b/Core/Web Layer/WebUI/DataViews.js\nindex 17c1cf282bb..5a5cefc3704 100644\n--- a/Core/Web Layer/WebUI/DataViews.js\t\n+++ b/Core/Web Layer/WebUI/DataViews.js\t\n@@ -6008,35 +6008,6 @@ var GridModule = (function () {\n             return;\n         }\n \n-        if (m_IsGrouped) {\n-            // after grouping, hide grouping column\n-            setTimeout(function () {\n-                try {\n-                    dataViewGrid.igGrid(\"hideColumn\", groupedKey);\n-                } catch (ex) {\n-                    wemiException.logException(ex);\n-                }\n-            }, 10);\n-        }\n-\n-        // get all columns from columnSettings\n-        const columns = dataViewGrid.igGrid(\"option\", \"columns\");\n-        const hiddenColumns = columns.filter(function (c) { return c.hidden; }).map(function (c) { return c.key; });\n-        const visibleColumns = ColumnSelectorModule.getVisibleColumns();\n-        // this is the previous grouped column which was hid\n-        const ungroupedColumn = visibleColumns.filter(function (key) { return hiddenColumns.indexOf(key) !== -1; });\n-\n-        if (ungroupedColumn.length !== 0) {\n-            // after ungrouping, show the ungrouped column\n-            setTimeout(function () {\n-                try {\n-                    dataViewGrid.igGrid(\"showColumn\", ungroupedColumn[0]);\n-                } catch (ex) {\n-                    wemiException.logException(ex);\n-                }\n-            }, 10);\n-        }\n-\n         adjustUiInVirtualization();\n     }\n \n"
+}

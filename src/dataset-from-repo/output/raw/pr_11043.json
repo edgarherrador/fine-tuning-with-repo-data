@@ -1,0 +1,93 @@
+{
+  "number": 11043,
+  "title": "PS-69535: added missing layer panel filter removal button to converted drawing page",
+  "body": "PS-69535: added missing layer panel filter removal button to converted drawing page",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "abarati",
+  "created_at": "2026-06-12T22:13:41Z",
+  "merged_at": null,
+  "base_branch": "sigma6/DrawingConversion",
+  "base_sha": "6806b36cfdf2d8f2707282735c1082290a63d138",
+  "head_branch": "wip/Arash/PS-69535-layer-remove-button",
+  "head_sha": "a007504e7372503767d77b624302c3f6ac22e786",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "henrykaus",
+      "submitted_at": "2026-06-15T16:59:23Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.html",
+      "line": 15,
+      "body": "Per Karl's comments in the Web Dev channel, we should no longer be using clickable divs (or other non-semantic elements for interaction), may want to convert this to a `button type=\"button\"` or a modus button variant.",
+      "author": "henrykaus",
+      "created_at": "2026-06-15T16:55:47Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.ts",
+      "line": 126,
+      "body": "Can we instead call the LayerPanelService.resetAllFilters()?",
+      "author": "henrykaus",
+      "created_at": "2026-06-15T16:58:43Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/Common/Components/Web/Pages/DrawingPage.cs",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 0,
+      "patch": "@@ -265,6 +265,7 @@ public DrawingPageSettings(PageConfiguration page, PageAdditionalPropertiesReque\n                 comparisonTitle = Drawing.GetNomenclature(Drawing.NomenclatureKeys.ComparisonCompareDrawingsTitle, nomenclature),\n                 enterFullScreenTooltip = nomenclature.GetDEFTooltip(PrologTable.Types.Drawing, \"ViewFullScreen\"),\n                 exitFullScreenTooltip = nomenclature.GetDEFTooltip(PrologTable.Types.Drawing, \"ExitFullScreen\"),\n+                removeFiltersText = nomenclature.GetNonFieldLabelNomenclature(PrologTable.Types.Drawing, \"LayerRemoveAppliedFilters\"),\n                 freeTextAnnotationInitialText = Drawing.GetNomenclature(Drawing.NomenclatureKeys.FreeTextAnnotationInitialText, nomenclature),\n                 photoAnnotations = nomenclature.GetNonFieldLabelNomenclature(PrologTable.Types.Drawing, \"PinPhotoAnnotations\"),\n                 notCurrentDrawing = string.Format(\n@@ -430,6 +431,7 @@ public class DrawingMessages\n         public string comparisonTitle { get; set; }\n         public string enterFullScreenTooltip { get; set; }\n         public string exitFullScreenTooltip { get; set; }\n+        public string removeFiltersText { get; set; }\n         public string freeTextAnnotationInitialText { get; set; }\n         public string photoAnnotations { get; set; }\n         public string notCurrentDrawing { get; set; }"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/classes/DrawingPageSettings.ts",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "patch": "@@ -9,6 +9,7 @@ export interface DrawingMessages {\n     comparisonTitle: string;\n     enterFullScreenTooltip: string;\n     exitFullScreenTooltip: string;\n+    removeFiltersText: string;\n     freeTextAnnotationInitialText: string;\n     photoAnnotations: string;\n     notCurrentDrawing: string;"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.html",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 0,
+      "patch": "@@ -9,6 +9,11 @@\n         <div #viewPort class=\"drawingviewer-content\"></div>\n         <drawing-index-panel />\n         <drawing-toolbox [mainPanelElement]=\"mainPanel\" />\n+        @if (layerPanelService.hasActiveFilters()) {\n+            <div class=\"removefilters\" (click)=\"onRemoveFiltersClicked()\">\n+                <i class=\"md md-close\"></i><span>{{ removeFiltersLabel() }}</span>\n+            </div>\n+        }\n     </div>\n \n     <div id=\"divRightArea\" class=\"drawingviewer-right-panel defRightPanel\""
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.ts",
+      "status": "modified",
+      "additions": 11,
+      "deletions": 1,
+      "patch": "@@ -1,4 +1,4 @@\n-import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, inject, signal, ViewChild } from \"@angular/core\";\n+import { AfterViewChecked, ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal, ViewChild } from \"@angular/core\";\n import { PageBaseEditor, PageBaseEditorProviders } from \"shared/page-management/PageBaseEditor\";\n import { ToolbarButtonClickedEvent } from \"shared/controls/toolbar/ToolbarButtonClickedEvent\";\n import { DEFToolbarKeys } from \"components/def-toolbar/DEFToolbarKeys\";\n@@ -113,9 +113,19 @@ export class DrawingPage extends PageBaseEditor implements AfterViewChecked {\n     private _viewPortRef: ElementRef<HTMLElement> | undefined;\n \n     public readonly drawingViewerService = inject(DrawingViewerService);\n+    protected readonly layerPanelService = inject(LayerPanelService);\n \n+    private readonly _drawingService = inject(DrawingService);\n     private readonly _udfService = inject(UDFService);\n \n+    protected readonly removeFiltersLabel = computed(\n+        () => this._drawingService.viewerSettings()?.messages?.removeFiltersText ?? \"\"\n+    );\n+\n+    protected onRemoveFiltersClicked(): void {\n+        window.annotationFilterModule?.resetAllFilters?.();\n+    }\n+\n     /** Expose DetailPanel and CDEFPanel keys to template */\n     public readonly DetailPanel = DEFToolbarKeys.DetailPanel;\n     public readonly CDEFPanel = DrawingRightPanels.Cdef;"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "patch": "@@ -66,6 +66,7 @@ declare global {\n         } | undefined;\n         annotationFilterModule: {\n             applyFilters?(): void;\n+            resetAllFilters?(): void;\n         } | undefined;\n         chatBotRef?: {\n             repositionIcon?(): void;"
+    },
+    {
+      "filename": "Core/Web Layer/WebUI/ps-ng/src/app/components/layer-panel/LayerPanelService.ts",
+      "status": "modified",
+      "additions": 10,
+      "deletions": 9,
+      "patch": "@@ -36,6 +36,9 @@ export class LayerPanelService extends BaseService {\n \n     public readonly nomenclature = signal(new LayerPanelNomenclature(null));\n \n+    /** True when at least one annotation filter is active. Drives the Angular remove-filters button visibility. */\n+    public readonly hasActiveFilters = signal(false);\n+\n     /**\n      * Indicates whether all annotations are enabled\n      */\n@@ -359,17 +362,15 @@ export class LayerPanelService extends BaseService {\n      * @param visible\n      */\n     private changeFilterButtonVisibility(visible: boolean): void {\n-        try {\n-            // todo: when pages converted, change this behavior to a signal\n+        // Signal path — consumed by the Angular drawing toolbox.\n+        this.hasActiveFilters.set(visible);\n \n+        // Legacy DOM path — still needed by the two unconverted JS WebViewer pages.\n+        // Remove this block once those pages are migrated to Angular.\n+        try {\n             const cmdRemoveFilter = document.getElementById(\"cmdRemoveFilters\");\n-            if (!cmdRemoveFilter) {return;}\n-\n-            if (visible) {\n-                cmdRemoveFilter.classList.remove(\"hidden\");\n-            } else {\n-                cmdRemoveFilter.classList.add(\"hidden\");\n-            }\n+            if (!cmdRemoveFilter) { return; }\n+            cmdRemoveFilter.classList.toggle(\"hidden\", !visible);\n         } catch (ex) {\n             this.wemiException.logException(ex);\n         }"
+    }
+  ],
+  "diff": "diff --git a/Core/Common/Components/Web/Pages/DrawingPage.cs b/Core/Common/Components/Web/Pages/DrawingPage.cs\nindex 4c1e7e0c66..19be9c8fa5 100644\n--- a/Core/Common/Components/Web/Pages/DrawingPage.cs\n+++ b/Core/Common/Components/Web/Pages/DrawingPage.cs\n@@ -265,6 +265,7 @@ public DrawingPageSettings(PageConfiguration page, PageAdditionalPropertiesReque\n                 comparisonTitle = Drawing.GetNomenclature(Drawing.NomenclatureKeys.ComparisonCompareDrawingsTitle, nomenclature),\n                 enterFullScreenTooltip = nomenclature.GetDEFTooltip(PrologTable.Types.Drawing, \"ViewFullScreen\"),\n                 exitFullScreenTooltip = nomenclature.GetDEFTooltip(PrologTable.Types.Drawing, \"ExitFullScreen\"),\n+                removeFiltersText = nomenclature.GetNonFieldLabelNomenclature(PrologTable.Types.Drawing, \"LayerRemoveAppliedFilters\"),\n                 freeTextAnnotationInitialText = Drawing.GetNomenclature(Drawing.NomenclatureKeys.FreeTextAnnotationInitialText, nomenclature),\n                 photoAnnotations = nomenclature.GetNonFieldLabelNomenclature(PrologTable.Types.Drawing, \"PinPhotoAnnotations\"),\n                 notCurrentDrawing = string.Format(\n@@ -430,6 +431,7 @@ public class DrawingMessages\n         public string comparisonTitle { get; set; }\n         public string enterFullScreenTooltip { get; set; }\n         public string exitFullScreenTooltip { get; set; }\n+        public string removeFiltersText { get; set; }\n         public string freeTextAnnotationInitialText { get; set; }\n         public string photoAnnotations { get; set; }\n         public string notCurrentDrawing { get; set; }\ndiff --git a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/classes/DrawingPageSettings.ts b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/classes/DrawingPageSettings.ts\nindex 5823f3742b..a8713d51ac 100644\n--- a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/classes/DrawingPageSettings.ts\t\n+++ b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/classes/DrawingPageSettings.ts\t\n@@ -9,6 +9,7 @@ export interface DrawingMessages {\n     comparisonTitle: string;\n     enterFullScreenTooltip: string;\n     exitFullScreenTooltip: string;\n+    removeFiltersText: string;\n     freeTextAnnotationInitialText: string;\n     photoAnnotations: string;\n     notCurrentDrawing: string;\ndiff --git a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.html b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.html\nindex 7548b6d510..aa054c5cd7 100644\n--- a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.html\t\n+++ b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.html\t\n@@ -9,6 +9,11 @@\n         <div #viewPort class=\"drawingviewer-content\"></div>\n         <drawing-index-panel />\n         <drawing-toolbox [mainPanelElement]=\"mainPanel\" />\n+        @if (layerPanelService.hasActiveFilters()) {\n+            <div class=\"removefilters\" (click)=\"onRemoveFiltersClicked()\">\n+                <i class=\"md md-close\"></i><span>{{ removeFiltersLabel() }}</span>\n+            </div>\n+        }\n     </div>\n \n     <div id=\"divRightArea\" class=\"drawingviewer-right-panel defRightPanel\"\ndiff --git a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.ts b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.ts\nindex 64283e0222..5a0f144a05 100644\n--- a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.ts\t\n+++ b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/drawing.page.ts\t\n@@ -1,4 +1,4 @@\n-import { AfterViewChecked, ChangeDetectionStrategy, Component, ElementRef, inject, signal, ViewChild } from \"@angular/core\";\n+import { AfterViewChecked, ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal, ViewChild } from \"@angular/core\";\n import { PageBaseEditor, PageBaseEditorProviders } from \"shared/page-management/PageBaseEditor\";\n import { ToolbarButtonClickedEvent } from \"shared/controls/toolbar/ToolbarButtonClickedEvent\";\n import { DEFToolbarKeys } from \"components/def-toolbar/DEFToolbarKeys\";\n@@ -113,9 +113,19 @@ export class DrawingPage extends PageBaseEditor implements AfterViewChecked {\n     private _viewPortRef: ElementRef<HTMLElement> | undefined;\n \n     public readonly drawingViewerService = inject(DrawingViewerService);\n+    protected readonly layerPanelService = inject(LayerPanelService);\n \n+    private readonly _drawingService = inject(DrawingService);\n     private readonly _udfService = inject(UDFService);\n \n+    protected readonly removeFiltersLabel = computed(\n+        () => this._drawingService.viewerSettings()?.messages?.removeFiltersText ?? \"\"\n+    );\n+\n+    protected onRemoveFiltersClicked(): void {\n+        window.annotationFilterModule?.resetAllFilters?.();\n+    }\n+\n     /** Expose DetailPanel and CDEFPanel keys to template */\n     public readonly DetailPanel = DEFToolbarKeys.DetailPanel;\n     public readonly CDEFPanel = DrawingRightPanels.Cdef;\ndiff --git a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts\nindex 7841daa638..97f601128a 100644\n--- a/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts\t\n+++ b/Core/Web Layer/WebUI/ps-ng/src/app/Drawing/services/drawing-viewer.service.ts\t\n@@ -66,6 +66,7 @@ declare global {\n         } | undefined;\n         annotationFilterModule: {\n             applyFilters?(): void;\n+            resetAllFilters?(): void;\n         } | undefined;\n         chatBotRef?: {\n             repositionIcon?(): void;\ndiff --git a/Core/Web Layer/WebUI/ps-ng/src/app/components/layer-panel/LayerPanelService.ts b/Core/Web Layer/WebUI/ps-ng/src/app/components/layer-panel/LayerPanelService.ts\nindex 0c9a302395..7006f68903 100644\n--- a/Core/Web Layer/WebUI/ps-ng/src/app/components/layer-panel/LayerPanelService.ts\t\n+++ b/Core/Web Layer/WebUI/ps-ng/src/app/components/layer-panel/LayerPanelService.ts\t\n@@ -36,6 +36,9 @@ export class LayerPanelService extends BaseService {\n \n     public readonly nomenclature = signal(new LayerPanelNomenclature(null));\n \n+    /** True when at least one annotation filter is active. Drives the Angular remove-filters button visibility. */\n+    public readonly hasActiveFilters = signal(false);\n+\n     /**\n      * Indicates whether all annotations are enabled\n      */\n@@ -359,17 +362,15 @@ export class LayerPanelService extends BaseService {\n      * @param visible\n      */\n     private changeFilterButtonVisibility(visible: boolean): void {\n-        try {\n-            // todo: when pages converted, change this behavior to a signal\n+        // Signal path — consumed by the Angular drawing toolbox.\n+        this.hasActiveFilters.set(visible);\n \n+        // Legacy DOM path — still needed by the two unconverted JS WebViewer pages.\n+        // Remove this block once those pages are migrated to Angular.\n+        try {\n             const cmdRemoveFilter = document.getElementById(\"cmdRemoveFilters\");\n-            if (!cmdRemoveFilter) {return;}\n-\n-            if (visible) {\n-                cmdRemoveFilter.classList.remove(\"hidden\");\n-            } else {\n-                cmdRemoveFilter.classList.add(\"hidden\");\n-            }\n+            if (!cmdRemoveFilter) { return; }\n+            cmdRemoveFilter.classList.toggle(\"hidden\", !visible);\n         } catch (ex) {\n             this.wemiException.logException(ex);\n         }\n"
+}

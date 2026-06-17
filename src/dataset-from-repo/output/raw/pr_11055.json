@@ -1,0 +1,211 @@
+{
+  "number": 11055,
+  "title": "PS-70018 POM updates for Drawing detail overlay. Validating UDF field and empty Sharing Log.",
+  "body": "Updates `UserCanEditCustomFieldsInDrawingPropertiesPanel` browser test to use the detail overlay instead of the info panel for additional info fields. It also adds a basic sharing log visibility check.\r\n\r\n\r\n<img width=\"715\" height=\"432\" alt=\"Screenshot 2026-06-15 144239\" src=\"https://github.com/user-attachments/assets/2406bf26-73ef-48b9-ad1b-339aef79ac94\" />\r\n<img width=\"1415\" height=\"616\" alt=\"Screenshot 2026-06-15 144148\" src=\"https://github.com/user-attachments/assets/32b988e2-68a0-4061-b7ae-814dceec7916\" />\r\n",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "JustineK-Trimble",
+  "created_at": "2026-06-15T21:48:40Z",
+  "merged_at": null,
+  "base_branch": "sigma6/SharingHistory",
+  "base_sha": "c3e8a983839e7a45bd496fd727333f43fdbd0c4b",
+  "head_branch": "wip/Justine/SharingHistory/PS-70018",
+  "head_sha": "ebccbe80916a2706d5d51d61c7a04bbb852a052c",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 0,
+  "approvers": [],
+  "changes_requested_count": 0,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nThis PR updates the Drawings parallel browser test + page objects to interact with the new Drawing detail overlay (instead of the legacy info panel tabs) when validating UDF fields, and adds a basic “Sharing Log is visible and empty” check.\n\n**Changes:**\n- Updated `UserCanEditCustomFieldsInDrawingPropertiesPanel` to open the “More info” detail overlay and validate UDF presence/value there.\n- Added a Sharing Log tab visibility + empty state text assertion to the same test.\n- Extended the `DrawingFDEF` page object model to expose a `DetailOverlay` (“InfoOverlay”) and a “More info” button.\n\n### Reviewed changes\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated 4 comments.\n\n| File | Description |\n| ---- | ----------- |\n| Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs | Switches the UDF edit/verify flow to the detail overlay and asserts Sharing Log empty-state behavior. |\n| Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs | Adds POM accessors for the detail overlay and the “More info” button; introduces overlay locators for UDF + Sharing Log. |\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-15T21:54:17Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated 1 comment.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-15T23:05:23Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated 3 comments.\n\n\n\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-06-15T23:22:50Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "I haven't looksd in great detail yet, but I think we should have 2 more scenarios:\n1. User without permission cannot see Sharing log tab, but can see Additional info\n2. User without permission and when there's no UDF cannot see More info link at all",
+      "author": "alexpaller",
+      "submitted_at": "2026-06-15T23:32:55Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "henrykaus",
+      "submitted_at": "2026-06-16T15:18:54Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "JustineK-Trimble",
+      "submitted_at": "2026-06-16T15:49:37Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "JustineK-Trimble",
+      "submitted_at": "2026-06-16T16:29:23Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "",
+      "author": "henrykaus",
+      "submitted_at": "2026-06-16T16:54:02Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 154,
+      "body": "ChangeFeaturePermission returns the previous permission level; setting this to IsAllowed without capturing the return value makes it impossible to restore the original state later (and the test currently hard-resets to IsDenied). Capture the previous value so the test can restore whatever was configured before it ran.",
+      "author": "Copilot",
+      "created_at": "2026-06-15T21:54:16Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 199,
+      "body": "The cleanup at the end of the test currently forces CanViewSharingHistory to IsDenied, which may not match the previous configured value for this user group. Restore the previously captured permission level instead.",
+      "author": "Copilot",
+      "created_at": "2026-06-15T21:54:16Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 154,
+      "body": "Feature permissions are shared test state; if any assertion fails before the end of the method, the permission will remain modified and can cascade failures into later tests. Wrap the test body in a try/finally (or restore in CustomTestCleanupAsync) so the original permission is always restored (see docs/ai/INTEGRATION_TEST_CONVENTIONS.md §9).",
+      "author": "Copilot",
+      "created_at": "2026-06-15T21:54:16Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs",
+      "line": 241,
+      "body": "The drawing detail overlay root element is always present in the DOM and is shown/hidden via the `[hidden]` attribute (see drawing-detail-overlay.component.html). Using `.Exists()` against `.drawing-detail-overlay` can report true even when the overlay is not actually visible. Scope the overlay to `:not([hidden])` (or equivalent XPath `not(@hidden)`) so IsShown() and child locators only succeed when the overlay is open.",
+      "author": "Copilot",
+      "created_at": "2026-06-15T21:54:16Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 168,
+      "body": "`_originalSharingHistoryPermission` is assigned but never used. In this test project `TreatWarningsAsErrors` is enabled (`Core/Tests/ProjectSight.Tests.ParallelBrowserTests/ProjectSight.Tests.ParallelBrowserTests.csproj:11`), so this will fail the build as an unused-variable warning.\n\nEither remove the assignment (if cleanup is the intended reset path), or actually use the returned value to restore the prior permission in `finally`/`CustomTestCleanupAsync`.",
+      "author": "Copilot",
+      "created_at": "2026-06-15T23:05:23Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 35,
+      "body": "Cleanup restores CanViewSharingHistory to PermissionLevel.IsDenied based on TestContext.TestName. That assumes the default permission is always denied and also risks leaking the permission change if the test is renamed or if other tests in this class later toggle the same permission. Prefer tracking the previous permission level when you change it, and restoring it unconditionally in cleanup when it was modified.",
+      "author": "Copilot",
+      "created_at": "2026-06-15T23:22:50Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 169,
+      "body": "This permission toggle isn’t formatted consistently with the surrounding code, and it also discards the previous permission level. Capture the previous value so cleanup can restore it, and format the call like the other multi-arg invocations in this file.",
+      "author": "Copilot",
+      "created_at": "2026-06-15T23:22:50Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 211,
+      "body": "`SharingLogEmptyMessage.Exists();` is a no-op (its return value is ignored). Turning this into an assertion gives a clearer failure mode if the sharing log never finishes loading or the empty state doesn’t render. Also, `Be(\"…\")` is the clearer assertion for an exact string match than `BeEquivalentTo`.",
+      "author": "Copilot",
+      "created_at": "2026-06-15T23:22:50Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs",
+      "line": 221,
+      "body": "See if the `ModusButton` POM would work here instead since we have that control available.",
+      "author": "henrykaus",
+      "created_at": "2026-06-16T15:14:10Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs",
+      "line": 241,
+      "body": "For new private variables, we follow the newer standard of just `_`, so in this case, that would be `_OverlayScope`",
+      "author": "henrykaus",
+      "created_at": "2026-06-16T15:15:07Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 211,
+      "body": "This likely should be its own test or part of its own test specific to the sharing log. We probably don't need to do extra testing on the sharing log in this UDF-specific test. When this is the case, you could just have generic initialize and cleanups relating to the sharing log permission",
+      "author": "henrykaus",
+      "created_at": "2026-06-16T15:17:26Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 187,
+      "body": "You only need the second line here, `_FDEF.InfoOverlay.AdditionalInfoTab.Exists()` will wait 30 seconds or until the element exists before doing the assertion",
+      "author": "henrykaus",
+      "created_at": "2026-06-16T15:18:34Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs",
+      "line": 221,
+      "body": "Is that POM on a feature branch? I only see ModusCheckbox and ModusSearch in main. ",
+      "author": "JustineK-Trimble",
+      "created_at": "2026-06-16T15:49:37Z",
+      "in_reply_to_id": 3421905649
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "line": 211,
+      "body": "Yeah, I think you're right. This was meant to just fix the failing test, but got conflated. Going to make a follow-up ticket for Sharing Log tests including the ones mentioned by @alexpaller above. ",
+      "author": "JustineK-Trimble",
+      "created_at": "2026-06-16T16:29:23Z",
+      "in_reply_to_id": 3421926933
+    },
+    {
+      "path": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs",
+      "line": 221,
+      "body": "I got the naming wrong, the POM is just called `Button` in `Button.cs`",
+      "author": "henrykaus",
+      "created_at": "2026-06-16T16:54:02Z",
+      "in_reply_to_id": 3421905649
+    }
+  ],
+  "issue_comments": [],
+  "files": [
+    {
+      "filename": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs",
+      "status": "modified",
+      "additions": 37,
+      "deletions": 9,
+      "patch": "@@ -22,6 +22,21 @@ public override async Task CustomTestInitializeAsync()\n             _FDEF = pageFactory.GetFullDefPage(PrologTable.Types.Drawing) as DrawingFDEF;\n         }\n \n+        public override async Task CustomTestCleanupAsync()\n+        {\n+            // Cleanup specific to test\n+            if (TestContext.TestName == nameof(UserCanEditCustomFieldsInDrawingPropertiesPanel))\n+            {\n+                // Always reset permission to default for regular user\n+                ChangeFeaturePermission(\n+                    FeaturePermission.IDs.RecordFeatures_Drawings_CanViewSharingHistory,\n+                    m_RegularUser.GroupID,\n+                    PermissionLevel.IsDenied);\n+            }\n+\n+            await base.CustomTestCleanupAsync();\n+        }\n+\n         // PS-T15436\n         [TestMethod]\n         public async Task UserCanEditDrawingPropertiesFromPropertiesPanel()\n@@ -149,6 +164,9 @@ public async Task MissingDrawingNumberMustBeSetBeforeDrawingIsSuccessfullyProces\n         [TestMethod]\n         public async Task UserCanEditCustomFieldsInDrawingPropertiesPanel()\n         {\n+            // give user permission to sharing log\n+ChangeFeaturePermission(FeaturePermission.IDs.RecordFeatures_Drawings_CanViewSharingHistory, m_RegularUser.GroupID, PermissionLevel.IsAllowed);\n+            \n             // create custom field for drawings (admin user is required)\n             var udfData = ExecuteInUserContext(m_oCaller, () =>\n             {\n@@ -160,17 +178,19 @@ public async Task UserCanEditCustomFieldsInDrawingPropertiesPanel()\n             _FDEF.NavigateTo(_Drawing.PrologRecordId);\n             _FDEF.WaitForDrawingToLoad();\n \n-            using (new AssertionScope())\n-            {\n-                _FDEF.InfoPanel.GeneralTab.Exists().Should().BeTrue(\"General tab should be visible when drawing has UDFs\");\n-                _FDEF.InfoPanel.AdditionalInfoTab.Exists().Should().BeTrue(\"Additional Info tab should be visible when drawing has UDFs\");\n-            }\n+            //open info overlay\n+            _FDEF.InfoPanel.MoreInfoButton.Click();\n+            _FDEF.InfoOverlay.IsShown().Should().BeTrue();\n \n-            // open UDF panel\n-            _FDEF.InfoPanel.AdditionalInfoTab.Click();\n+            // validate additional info tab is visible\n+            _FDEF.InfoOverlay.AdditionalInfoTab.Exists();\n+            _FDEF.InfoOverlay.AdditionalInfoTab.Exists().Should().BeTrue(\"Additional info should be visible when drawing has UDFs\");\n+\n+            // open detail overlay\n+            _FDEF.InfoOverlay.AdditionalInfoTab.Click();\n \n             // validate the UDF is there\n-            var udfField = _FDEF.InfoPanel.UDFField(udfData.Name);\n+            var udfField = _FDEF.InfoOverlay.UDFField(udfData.Name);\n             udfField.Exists().Should().BeTrue(\"UDF should be visible on Additional Info tab\");\n \n             // fill in UDF with random value\n@@ -179,8 +199,16 @@ public async Task UserCanEditCustomFieldsInDrawingPropertiesPanel()\n             _FDEF.SaveAndRefreshDrawing(_Drawing.PrologRecordId);\n \n             // open UDF panel again and verify value is saved\n-            _FDEF.InfoPanel.AdditionalInfoTab.Click();\n+            _FDEF.InfoPanel.MoreInfoButton.Click();\n+            _FDEF.InfoOverlay.IsShown().Should().BeTrue();\n+            _FDEF.InfoOverlay.AdditionalInfoTab.Click();\n             udfField.Value.Should().Be(randomNumber, \"UDF value should have been saved\");\n+\n+            // validate sharing log is visible and empty\n+            _FDEF.InfoOverlay.SharingLogTab.Exists().Should().BeTrue(\"Sharing log tab should be visible on all drawings\");\n+            _FDEF.InfoOverlay.SharingLogTab.Click();\n+            _FDEF.InfoOverlay.SharingLogEmptyMessage.Exists();\n+            _FDEF.InfoOverlay.SharingLogEmptyMessage.Text.Should().BeEquivalentTo(\"This record has not been shared yet.\");\n         }\n \n         #region Helpers"
+    },
+    {
+      "filename": "Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs",
+      "status": "modified",
+      "additions": 27,
+      "deletions": 4,
+      "patch": "@@ -4,6 +4,7 @@\n using ProjectSight.Tests.BrowserPages.Capabilities;\n using ProjectSight.Tests.BrowserPages.Contracts;\n using ProjectSight.Tests.BrowserPages.Controls;\n+using ProjectSight.Tests.BrowserPages.Extensions;\n using ProjectSight.Tests.BrowserPages.Helpers;\n using ProjectSight.Tests.BrowserPages.Pages.FDEFs.Components;\n \n@@ -45,6 +46,7 @@ public DrawingFDEF(BrowserAgent browser, ElementScope scope) : base(browser, sco\n         public WebViewerSearchPanel SearchPanel => new WebViewerSearchPanel(Browser, _WebViewer);\n         public WebViewerCommentsPanel CommentsPanel => new WebViewerCommentsPanel(Browser, _WebViewer);\n         public PropertiesPanel InfoPanel => new PropertiesPanel(Browser, m_scope);\n+        public DetailOverlay InfoOverlay => new DetailOverlay(Browser, m_scope);\n         public ElementScope UpdateDrawingNumber => m_scope.FindButton(\"Update\");\n \n         #endregion Locators\n@@ -216,11 +218,8 @@ public PropertiesPanel(BrowserAgent browser, ElementScope scope) : base(browser,\n             public TextEditor Title => new TextEditor(m_browser, m_PanelScope, \"Title\");\n             public LookupListEditor Discipline => new LookupListEditor(m_browser, m_PanelScope, \"Discipline\");\n             public LookupListEditor Location => new LookupListEditor(m_browser, m_PanelScope, \"Location\");\n+            public ElementScope MoreInfoButton => m_PanelScope.FindButton(\"More info\");\n \n-            public ElementScope GeneralTab => m_PanelScope.FindLink(\"General\");\n-            public ElementScope AdditionalInfoTab => m_PanelScope.FindLink(\"Additional info\");\n-\n-            public ElementScope UDFField(string label) => m_PanelScope.FindCss($\"div[data-gainsight$='udf_{label.ToLower()}'] input\");\n \n             #endregion // Locators\n \n@@ -231,6 +230,30 @@ public PropertiesPanel(BrowserAgent browser, ElementScope scope) : base(browser,\n             #endregion // Methods\n         }\n \n+        public class DetailOverlay : BrowserAndElementAware\n+        {\n+            public DetailOverlay(BrowserAgent browser, ElementScope scope) : base(browser, scope)\n+            {\n+            }\n+\n+            #region Locators\n+\n+            private ElementScope m_OverlayScope => m_scope.FindCss(\".drawing-detail-overlay\");\n+            public ElementScope AdditionalInfoTab => m_OverlayScope.FindCss(\"udfs-tab-button\");\n+            public ElementScope SharingLogTab => m_OverlayScope.FindCss(\"tab-button\");\n+            public ElementScope SharingLog => m_OverlayScope.FindCss(\"sharing-log\");\n+            public ElementScope SharingLogEmptyMessage => m_OverlayScope.FindCss(\".sharing-log-empty\");\n+            public ElementScope UDFField(string label) => m_OverlayScope.FindCss($\"div[data-gainsight$='udf_{label.ToLower()}'] input\");\n+\n+            #endregion // Locators\n+\n+            #region Methods\n+\n+            public bool IsShown() => m_OverlayScope.IsDisplayed();\n+\n+            #endregion // Methods\n+        }\n+\n         /// <summary>\n         /// The popup that appears when annotation/hyperlink with link to drawing is clicked\n         /// </summary>"
+    }
+  ],
+  "diff": "diff --git a/Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs b/Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs\nindex 4537834e454..9761bad012b 100644\n--- a/Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs\n+++ b/Core/Tests/ProjectSight.Tests.ParallelBrowserTests/Records/Drawing/DrawingPropertiesPanel.cs\n@@ -22,6 +22,21 @@ public override async Task CustomTestInitializeAsync()\n             _FDEF = pageFactory.GetFullDefPage(PrologTable.Types.Drawing) as DrawingFDEF;\n         }\n \n+        public override async Task CustomTestCleanupAsync()\n+        {\n+            // Cleanup specific to test\n+            if (TestContext.TestName == nameof(UserCanEditCustomFieldsInDrawingPropertiesPanel))\n+            {\n+                // Always reset permission to default for regular user\n+                ChangeFeaturePermission(\n+                    FeaturePermission.IDs.RecordFeatures_Drawings_CanViewSharingHistory,\n+                    m_RegularUser.GroupID,\n+                    PermissionLevel.IsDenied);\n+            }\n+\n+            await base.CustomTestCleanupAsync();\n+        }\n+\n         // PS-T15436\n         [TestMethod]\n         public async Task UserCanEditDrawingPropertiesFromPropertiesPanel()\n@@ -149,6 +164,9 @@ public async Task MissingDrawingNumberMustBeSetBeforeDrawingIsSuccessfullyProces\n         [TestMethod]\n         public async Task UserCanEditCustomFieldsInDrawingPropertiesPanel()\n         {\n+            // give user permission to sharing log\n+ChangeFeaturePermission(FeaturePermission.IDs.RecordFeatures_Drawings_CanViewSharingHistory, m_RegularUser.GroupID, PermissionLevel.IsAllowed);\n+            \n             // create custom field for drawings (admin user is required)\n             var udfData = ExecuteInUserContext(m_oCaller, () =>\n             {\n@@ -160,17 +178,19 @@ public async Task UserCanEditCustomFieldsInDrawingPropertiesPanel()\n             _FDEF.NavigateTo(_Drawing.PrologRecordId);\n             _FDEF.WaitForDrawingToLoad();\n \n-            using (new AssertionScope())\n-            {\n-                _FDEF.InfoPanel.GeneralTab.Exists().Should().BeTrue(\"General tab should be visible when drawing has UDFs\");\n-                _FDEF.InfoPanel.AdditionalInfoTab.Exists().Should().BeTrue(\"Additional Info tab should be visible when drawing has UDFs\");\n-            }\n+            //open info overlay\n+            _FDEF.InfoPanel.MoreInfoButton.Click();\n+            _FDEF.InfoOverlay.IsShown().Should().BeTrue();\n \n-            // open UDF panel\n-            _FDEF.InfoPanel.AdditionalInfoTab.Click();\n+            // validate additional info tab is visible\n+            _FDEF.InfoOverlay.AdditionalInfoTab.Exists();\n+            _FDEF.InfoOverlay.AdditionalInfoTab.Exists().Should().BeTrue(\"Additional info should be visible when drawing has UDFs\");\n+\n+            // open detail overlay\n+            _FDEF.InfoOverlay.AdditionalInfoTab.Click();\n \n             // validate the UDF is there\n-            var udfField = _FDEF.InfoPanel.UDFField(udfData.Name);\n+            var udfField = _FDEF.InfoOverlay.UDFField(udfData.Name);\n             udfField.Exists().Should().BeTrue(\"UDF should be visible on Additional Info tab\");\n \n             // fill in UDF with random value\n@@ -179,8 +199,16 @@ public async Task UserCanEditCustomFieldsInDrawingPropertiesPanel()\n             _FDEF.SaveAndRefreshDrawing(_Drawing.PrologRecordId);\n \n             // open UDF panel again and verify value is saved\n-            _FDEF.InfoPanel.AdditionalInfoTab.Click();\n+            _FDEF.InfoPanel.MoreInfoButton.Click();\n+            _FDEF.InfoOverlay.IsShown().Should().BeTrue();\n+            _FDEF.InfoOverlay.AdditionalInfoTab.Click();\n             udfField.Value.Should().Be(randomNumber, \"UDF value should have been saved\");\n+\n+            // validate sharing log is visible and empty\n+            _FDEF.InfoOverlay.SharingLogTab.Exists().Should().BeTrue(\"Sharing log tab should be visible on all drawings\");\n+            _FDEF.InfoOverlay.SharingLogTab.Click();\n+            _FDEF.InfoOverlay.SharingLogEmptyMessage.Exists();\n+            _FDEF.InfoOverlay.SharingLogEmptyMessage.Text.Should().BeEquivalentTo(\"This record has not been shared yet.\");\n         }\n \n         #region Helpers\ndiff --git a/Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs b/Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs\nindex ce2ba9a06ad..0112b92b81f 100644\n--- a/Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs\n+++ b/Core/Tests/ProjectSight.Tests.ParallelBrowserTests/_Pages/Pages/DrawingFDEF.cs\n@@ -4,6 +4,7 @@\n using ProjectSight.Tests.BrowserPages.Capabilities;\n using ProjectSight.Tests.BrowserPages.Contracts;\n using ProjectSight.Tests.BrowserPages.Controls;\n+using ProjectSight.Tests.BrowserPages.Extensions;\n using ProjectSight.Tests.BrowserPages.Helpers;\n using ProjectSight.Tests.BrowserPages.Pages.FDEFs.Components;\n \n@@ -45,6 +46,7 @@ public DrawingFDEF(BrowserAgent browser, ElementScope scope) : base(browser, sco\n         public WebViewerSearchPanel SearchPanel => new WebViewerSearchPanel(Browser, _WebViewer);\n         public WebViewerCommentsPanel CommentsPanel => new WebViewerCommentsPanel(Browser, _WebViewer);\n         public PropertiesPanel InfoPanel => new PropertiesPanel(Browser, m_scope);\n+        public DetailOverlay InfoOverlay => new DetailOverlay(Browser, m_scope);\n         public ElementScope UpdateDrawingNumber => m_scope.FindButton(\"Update\");\n \n         #endregion Locators\n@@ -216,11 +218,8 @@ public PropertiesPanel(BrowserAgent browser, ElementScope scope) : base(browser,\n             public TextEditor Title => new TextEditor(m_browser, m_PanelScope, \"Title\");\n             public LookupListEditor Discipline => new LookupListEditor(m_browser, m_PanelScope, \"Discipline\");\n             public LookupListEditor Location => new LookupListEditor(m_browser, m_PanelScope, \"Location\");\n+            public ElementScope MoreInfoButton => m_PanelScope.FindButton(\"More info\");\n \n-            public ElementScope GeneralTab => m_PanelScope.FindLink(\"General\");\n-            public ElementScope AdditionalInfoTab => m_PanelScope.FindLink(\"Additional info\");\n-\n-            public ElementScope UDFField(string label) => m_PanelScope.FindCss($\"div[data-gainsight$='udf_{label.ToLower()}'] input\");\n \n             #endregion // Locators\n \n@@ -231,6 +230,30 @@ public PropertiesPanel(BrowserAgent browser, ElementScope scope) : base(browser,\n             #endregion // Methods\n         }\n \n+        public class DetailOverlay : BrowserAndElementAware\n+        {\n+            public DetailOverlay(BrowserAgent browser, ElementScope scope) : base(browser, scope)\n+            {\n+            }\n+\n+            #region Locators\n+\n+            private ElementScope m_OverlayScope => m_scope.FindCss(\".drawing-detail-overlay\");\n+            public ElementScope AdditionalInfoTab => m_OverlayScope.FindCss(\"udfs-tab-button\");\n+            public ElementScope SharingLogTab => m_OverlayScope.FindCss(\"tab-button\");\n+            public ElementScope SharingLog => m_OverlayScope.FindCss(\"sharing-log\");\n+            public ElementScope SharingLogEmptyMessage => m_OverlayScope.FindCss(\".sharing-log-empty\");\n+            public ElementScope UDFField(string label) => m_OverlayScope.FindCss($\"div[data-gainsight$='udf_{label.ToLower()}'] input\");\n+\n+            #endregion // Locators\n+\n+            #region Methods\n+\n+            public bool IsShown() => m_OverlayScope.IsDisplayed();\n+\n+            #endregion // Methods\n+        }\n+\n         /// <summary>\n         /// The popup that appears when annotation/hyperlink with link to drawing is clicked\n         /// </summary>\n"
+}

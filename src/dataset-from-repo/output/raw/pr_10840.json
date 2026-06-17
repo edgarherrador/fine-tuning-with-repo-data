@@ -1,0 +1,92 @@
+{
+  "number": 10840,
+  "title": "PS-68982 The GroupId when updated for the user should update in PermissionProject table for the same user.",
+  "body": "PS-68982 The GroupId when updated for the user should update in PermissionProject table for the same user. Before this change itt was fetching the non-updated GroupID from PermissionProject table and updating in the m_UserCache.",
+  "state": "open",
+  "draft": false,
+  "labels": [],
+  "author": "AbdulRahim1412",
+  "created_at": "2026-05-20T17:47:11Z",
+  "merged_at": null,
+  "base_branch": "feature/Improv",
+  "base_sha": "588df86ab8b940be40c2c5826f53e82ced28130f",
+  "head_branch": "wip/abdul/PS-68982",
+  "head_sha": "0c048c75eb86ac45b12cf4480b7e610ee6ff5f5b",
+  "additions": 0,
+  "deletions": 0,
+  "changed_files": 0,
+  "approvals_count": 1,
+  "approvers": [
+    "kcostenbader"
+  ],
+  "changes_requested_count": 1,
+  "reviews": [
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nThis PR addresses PS-68982 by ensuring that when a user’s `GroupID` (default security role) is updated, the corresponding `PermissionProject` (project permission) records are also updated so downstream reads don’t repopulate `m_UserCache` with stale group information.\n\n**Changes:**\n- Extended `UpdateUserProjectPermission(...)` with an optional `userGroupIdUpdated` flag intended to force rewriting permission rows with the user’s current `GroupID`.\n- Added a new `UpdateUserProjectPermission(...)` call in `UpdateUsersFieldsInternalAsync(...)` when `GroupID` is present in the incoming `RecordChangeUser.Fields`.\n\n\n\n<details>\n<summary>Comments suppressed due to low confidence (1)</summary>\n\n**Core/Business Layer/DataAccess/UserSystem.cs:2129**\n* When `userGroupIdUpdated` is true, this condition forces *every* accessible project permission’s `GroupID` to be overwritten with `user.GroupID`, which will wipe out intentional per-project role overrides. The codebase already expects that changing a user’s default security role should only update project permissions that were using the previous default (leaving non-matching project roles unchanged), e.g. `Core/Tests/ProjectSight.Tests.ParallelIntegrationTests/Excel/Users/PropagateDefaultSecurityRoleToProjectsTests.cs` asserts non-matching project roles remain unchanged. Consider passing the previous default group id into this method and only updating permissions whose `GroupID` matches that previous value (or otherwise explicitly marked as “use default”), rather than blanket-updating all permissions.\n```\n                    permission.UserID = user.ID;\n                    if (permission.GroupID == UserProjectPermission.USE_USER_GROUPID || userGroupIdUpdated)\n                    {\n                        permission.GroupID = user.GroupID;\n                        permission.GroupName = user.GroupName;\n                    }\n```\n</details>\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-05-20T17:52:19Z"
+    },
+    {
+      "state": "COMMENTED",
+      "body": "## Pull request overview\n\nCopilot reviewed 1 out of 1 changed files in this pull request and generated 2 comments.\n\n\n\n<details>\n<summary>Comments suppressed due to low confidence (1)</summary>\n\n**Core/Business Layer/DataAccess/UserSystem.cs:2129**\n* `userGroupIdUpdated` currently forces `permission.GroupID`/`GroupName` to be overwritten for *all* accessible project permissions. This will wipe any project-specific security role overrides (and can also override role values explicitly supplied in the update request). Instead, only update PermissionProject rows that were implicitly using the user's *previous* default group (e.g., where the permission's GroupID equals the prior `user.GroupID`), leaving per-project role assignments untouched.\n```\n                    permission.UserID = user.ID;\n                    if (permission.GroupID == UserProjectPermission.USE_USER_GROUPID || userGroupIdUpdated)\n                    {\n                        permission.GroupID = user.GroupID;\n                        permission.GroupName = user.GroupName;\n                    }\n```\n</details>\n\n",
+      "author": "copilot-pull-request-reviewer[bot]",
+      "submitted_at": "2026-05-20T18:21:47Z"
+    },
+    {
+      "state": "CHANGES_REQUESTED",
+      "body": "In local testing, I am not seeing the behavior that this is attempting to fix. I have asked for clarification and update of the bug. Once we get that, we can determine whether this is an appropriate fix or not.",
+      "author": "kcostenbader",
+      "submitted_at": "2026-05-20T19:43:26Z"
+    },
+    {
+      "state": "APPROVED",
+      "body": "",
+      "author": "kcostenbader",
+      "submitted_at": "2026-05-26T15:35:27Z"
+    }
+  ],
+  "review_comments": [
+    {
+      "path": "Core/Business Layer/DataAccess/UserSystem.cs",
+      "line": 2620,
+      "body": "This introduces a second call to `UpdateUserProjectPermission` when `GroupID` is present in `recordChange.Fields`. If `AnyProjectPermissionsChanged` is also true (and the default group is being edited), the method can run twice in the same transaction, adding extra DB work and potentially affecting counters like `user.ProjectPermissionsAdded`. It would be safer to compute `userGroupIdChanged` once (e.g. `recordChange.Fields?.ContainsKey(nameof(UserMaintenance.GroupID)) == true`) and call `UpdateUserProjectPermission` only once with an explicit flag, rather than in two separate blocks. Also, `TryGetValue(..., out var value)` is currently only used for its boolean result; use `out _` (or `ContainsKey`) to avoid the unused local.",
+      "author": "Copilot",
+      "created_at": "2026-05-20T17:52:19Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/UserSystem.cs",
+      "line": 2602,
+      "body": "`userGroupIdUpdated` is derived from `recordChange.Fields.ContainsKey(GroupID)` rather than whether the value actually changed. This can trigger a full PermissionProject rewrite (one stored-proc call per project permission) even for no-op updates. Consider capturing the previous `user.GroupID` before applying `recordChange` and only running the PermissionProject update when the group ID transitions to a different value.",
+      "author": "Copilot",
+      "created_at": "2026-05-20T18:21:47Z",
+      "in_reply_to_id": null
+    },
+    {
+      "path": "Core/Business Layer/DataAccess/UserSystem.cs",
+      "line": 2622,
+      "body": "This change introduces new behavior when a user's default `GroupID` changes without any explicit project-permission edits. There are existing integration tests for project permission GroupID updates, but none appear to assert that a default GroupID change correctly updates `PermissionProject` while preserving project-specific role overrides. Adding a targeted test for this scenario would help prevent regressions.",
+      "author": "Copilot",
+      "created_at": "2026-05-20T18:21:47Z",
+      "in_reply_to_id": null
+    }
+  ],
+  "issue_comments": [
+    {
+      "body": "I shall merge once feature/improv branch is open for merging",
+      "author": "AbdulRahim1412",
+      "created_at": "2026-05-27T06:45:20Z"
+    }
+  ],
+  "files": [
+    {
+      "filename": "Core/Business Layer/DataAccess/UserSystem.cs",
+      "status": "modified",
+      "additions": 12,
+      "deletions": 3,
+      "patch": "@@ -2081,7 +2081,7 @@ private void GetDeniedTableTypesForGroup(IDBHelper portfolioDB, int groupId, Has\n         /// <param name=\"portfolioDB\"></param>\n         /// <remarks></remarks>\n         [SuppressMessage(\"ReSharper\", \"StringLiteralTypo\")]\n-        public static void UpdateUserProjectPermission(IDBHelper portfolioDB, UserMaintenance user, ErrorEncountered error)\n+        public static void UpdateUserProjectPermission(IDBHelper portfolioDB, UserMaintenance user, ErrorEncountered error, bool userGroupIdUpdated = false)\n         {\n             // Exceptions are handled by the caller\n \n@@ -2122,7 +2122,7 @@ public static void UpdateUserProjectPermission(IDBHelper portfolioDB, UserMainte\n                     }\n \n                     permission.UserID = user.ID;\n-                    if (permission.GroupID == UserProjectPermission.USE_USER_GROUPID)\n+                    if (permission.GroupID == UserProjectPermission.USE_USER_GROUPID || userGroupIdUpdated)\n                     {\n                         permission.GroupID = user.GroupID;\n                         permission.GroupName = user.GroupName;\n@@ -2595,10 +2595,12 @@ private async Task<UserMaintenance> UpdateUsersFieldsInternalAsync(UpdateUserReq\n                 // Make sure there is no ProjectPermission / PermissionProject records for the user if they are a portfolio admin\n                 ClearProjectPermissionForAdmin(portfolioDB, user);\n \n+                var userGroupIdUpdated = recordChange.Fields?.ContainsKey(nameof(UserMaintenance.GroupID)) == true;\n+\n                 if (recordChange.AnyProjectPermissionsChanged)\n                 {\n                     // Update user project permissions in PermissionProject\n-                    UpdateUserProjectPermission(portfolioDB, user, error);\n+                    UpdateUserProjectPermission(portfolioDB, user, error, userGroupIdUpdated);\n \n                     IncrementUserInvitedUserCount(request.IgnitionDB, user.ProjectPermissionsAdded);\n \n@@ -2612,6 +2614,13 @@ private async Task<UserMaintenance> UpdateUsersFieldsInternalAsync(UpdateUserReq\n                     }\n                 }\n \n+                \n+                if (!recordChange.AnyProjectPermissionsChanged && userGroupIdUpdated)\n+                {\n+                    // Update user project permissions in PermissionProject\n+                    UpdateUserProjectPermission(portfolioDB, user, error, userGroupIdUpdated);\n+                }\n+\n                 okToCommit = true;\n \n                 return user;"
+    }
+  ],
+  "diff": "diff --git a/Core/Business Layer/DataAccess/UserSystem.cs b/Core/Business Layer/DataAccess/UserSystem.cs\nindex f19e37103a9..03303316d7c 100644\n--- a/Core/Business Layer/DataAccess/UserSystem.cs\t\n+++ b/Core/Business Layer/DataAccess/UserSystem.cs\t\n@@ -2081,7 +2081,7 @@ private void GetDeniedTableTypesForGroup(IDBHelper portfolioDB, int groupId, Has\n         /// <param name=\"portfolioDB\"></param>\n         /// <remarks></remarks>\n         [SuppressMessage(\"ReSharper\", \"StringLiteralTypo\")]\n-        public static void UpdateUserProjectPermission(IDBHelper portfolioDB, UserMaintenance user, ErrorEncountered error)\n+        public static void UpdateUserProjectPermission(IDBHelper portfolioDB, UserMaintenance user, ErrorEncountered error, bool userGroupIdUpdated = false)\n         {\n             // Exceptions are handled by the caller\n \n@@ -2122,7 +2122,7 @@ public static void UpdateUserProjectPermission(IDBHelper portfolioDB, UserMainte\n                     }\n \n                     permission.UserID = user.ID;\n-                    if (permission.GroupID == UserProjectPermission.USE_USER_GROUPID)\n+                    if (permission.GroupID == UserProjectPermission.USE_USER_GROUPID || userGroupIdUpdated)\n                     {\n                         permission.GroupID = user.GroupID;\n                         permission.GroupName = user.GroupName;\n@@ -2595,10 +2595,12 @@ private async Task<UserMaintenance> UpdateUsersFieldsInternalAsync(UpdateUserReq\n                 // Make sure there is no ProjectPermission / PermissionProject records for the user if they are a portfolio admin\n                 ClearProjectPermissionForAdmin(portfolioDB, user);\n \n+                var userGroupIdUpdated = recordChange.Fields?.ContainsKey(nameof(UserMaintenance.GroupID)) == true;\n+\n                 if (recordChange.AnyProjectPermissionsChanged)\n                 {\n                     // Update user project permissions in PermissionProject\n-                    UpdateUserProjectPermission(portfolioDB, user, error);\n+                    UpdateUserProjectPermission(portfolioDB, user, error, userGroupIdUpdated);\n \n                     IncrementUserInvitedUserCount(request.IgnitionDB, user.ProjectPermissionsAdded);\n \n@@ -2612,6 +2614,13 @@ private async Task<UserMaintenance> UpdateUsersFieldsInternalAsync(UpdateUserReq\n                     }\n                 }\n \n+                \n+                if (!recordChange.AnyProjectPermissionsChanged && userGroupIdUpdated)\n+                {\n+                    // Update user project permissions in PermissionProject\n+                    UpdateUserProjectPermission(portfolioDB, user, error, userGroupIdUpdated);\n+                }\n+\n                 okToCommit = true;\n \n                 return user;\n"
+}
