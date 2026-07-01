@@ -10,10 +10,10 @@
 
 
 """
-main.py
+00-hf-job.py
 Minimal python script to illustrate how huggingface jobs are run
 using uv scripts (Python scripts with inline dependencies).
-hf jobs uv run --flavor a10g-small main.py --input_text "'The answer is 42'"
+hf jobs uv run --flavor a10g-small 00-hf-job.py --input_text "'The answer is 42'"
 """
 
 # Dependencies
