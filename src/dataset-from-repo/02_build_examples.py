@@ -15,6 +15,7 @@ Score de calidad:
   +15  Descripción ≥ 80 chars
   +20  ≥ 2 reviewers aprobaron
   +10  ≥ 1 reviewer aprobó
+  +40  Participación en comentarios/reviews de usuarios en REQUIRED_COMMENTERS
   +20  Tiene review comments (feedback inline)
   +10  Tiene comments del hilo (discusión)
   -20  Draft PR
@@ -145,6 +146,32 @@ def score_pr(pr: dict) -> tuple[int, list[str]]:
     if pr.get("issue_comments"):
         score += 10
         reasons.append(f"+10 {len(pr['issue_comments'])} issue comments")
+
+    required_commenters = {
+        user.strip().lstrip("@").lower()
+        for user in getattr(config, "REQUIRED_COMMENTERS", [])
+        if user and user.strip()
+    }
+    if required_commenters:
+        participants = set()
+        participants.update(
+            (rv.get("author") or "").strip().lstrip("@").lower()
+            for rv in pr.get("reviews", [])
+        )
+        participants.update(
+            (rc.get("author") or "").strip().lstrip("@").lower()
+            for rc in pr.get("review_comments", [])
+        )
+        participants.update(
+            (ic.get("author") or "").strip().lstrip("@").lower()
+            for ic in pr.get("issue_comments", [])
+        )
+        matched_commenters = sorted(required_commenters.intersection(participants))
+        if matched_commenters:
+            bonus = getattr(config, "REQUIRED_COMMENTERS_BONUS", 40)
+            score += bonus
+            pretty_users = ", ".join(f"@{user}" for user in matched_commenters)
+            reasons.append(f"+{bonus} participación de usuarios clave ({pretty_users})")
 
     if pr.get("draft", False):
         score -= 20

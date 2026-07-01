@@ -24,12 +24,14 @@ EVAL_FILE    = OUTPUT_DIR / "dataset_eval.jsonl"
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Fase 1: solo PRs abiertos  /  Fase 2: todos los merged ───────────────────
-PR_STATE = "open"       # "open" | "closed" | "all"
-PR_LIMIT = 200          # None = sin límite (cuidado con rate limits)
+PR_STATE = "all"       # "open" | "closed" | "all"
+PR_LIMIT = 500          # None = sin límite (cuidado con rate limits)
+REQUIRED_COMMENTERS = ["kcostenbader", "AdamCollins", "rroesler"]  # [] = sin filtro por autores de comentarios/reviews
 
 # ── Límites de calidad ────────────────────────────────────────────────────────
 MIN_DESCRIPTION_CHARS = 80    # Descripciones < N chars → descartado
 MIN_SCORE             = 40    # Score mínimo para incluir en el dataset (0-100)
+REQUIRED_COMMENTERS_BONUS = 40  # Bonus alto si participa algún usuario de REQUIRED_COMMENTERS
 MAX_DIFF_LINES        = 800   # Diffs muy grandes → ruido (se truncan, no se descartan)
 MIN_DIFF_LINES        = 5     # Diffs triviales → descartados
 EVAL_RATIO            = 0.1   # Fracción del dataset para evaluación

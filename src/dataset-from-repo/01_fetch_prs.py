@@ -126,6 +126,29 @@ def fetch_pr_files(pr_number: int) -> list:
     return paginate(url)
 
 
+def has_required_commenter(pr_number: int) -> bool:
+    """Valida si el PR tiene al menos un comentario/review de algún autor requerido."""
+    required_commenters = {
+        commenter.strip().lower()
+        for commenter in getattr(config, "REQUIRED_COMMENTERS", [])
+        if commenter and commenter.strip()
+    }
+
+    if not required_commenters:
+        return True
+
+    issue_comments = fetch_issue_comments(pr_number)
+    if any((c.get("user") or {}).get("login", "").lower() in required_commenters for c in issue_comments):
+        return True
+
+    review_comments = fetch_review_comments(pr_number)
+    if any((c.get("user") or {}).get("login", "").lower() in required_commenters for c in review_comments):
+        return True
+
+    reviews = fetch_reviews(pr_number)
+    return any((r.get("user") or {}).get("login", "").lower() in required_commenters for r in reviews)
+
+
 def fetch_single_pr(pr: dict) -> dict:
     """Compila toda la información de un PR en un solo dict."""
     n = pr["number"]
@@ -217,7 +240,20 @@ def main() -> None:
     if config.PR_LIMIT:
         pr_list = pr_list[: config.PR_LIMIT]
 
-    print(f"→ {len(pr_list)} PRs encontrados\n")
+    print(f"→ {len(pr_list)} PRs encontrados")
+
+    if getattr(config, "REQUIRED_COMMENTERS", []):
+        commenters_display = ", ".join(f"@{user}" for user in config.REQUIRED_COMMENTERS)
+        print(f"Filtrando PRs con comentarios/reviews de: {commenters_display}…")
+        filtered_pr_list = []
+        for pr in tqdm(pr_list, desc="Filtrando PRs", unit="PR"):
+            if has_required_commenter(pr["number"]):
+                filtered_pr_list.append(pr)
+
+        pr_list = filtered_pr_list
+        print(f"→ {len(pr_list)} PRs cumplen el filtro\n")
+    else:
+        print()
 
     # Descargar uno por uno
     index = []
